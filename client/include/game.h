@@ -30,7 +30,7 @@
 #include "map.h"
 #include "combat.h"
 #include "treasure.h"
-
+#include "extra.h"
 #include <vector>
 
 void InitGame();
@@ -45,9 +45,16 @@ struct InventoryContents
 	int Quantity;
 };
 
+enum PLAYER_TYPE {
+    PLAYER1,
+    PLAYER2,
+    SINGLE_PLAYER
+};
+
 class PlayerData
 {
 public:
+    PlayerData(std::string name, PLAYER_TYPE type);
 	Vector2 Position = {0, 0};
 	SpriteInstance *Sprite = nullptr;
 
@@ -73,6 +80,8 @@ public:
     void ApplyActions();
     void UpdateSprite();
 
+    MobInstance* GetNearestMobInSight(std::vector<MobInstance> &mobs);
+
 	float LastAttack = 0;
 	float LastConsumeable = 0;
 	float AttackCooldown = 0;
@@ -89,6 +98,9 @@ public:
 	std::vector<InventoryContents> BackpackContents;
 
 	float PickupDistance = 20;
+
+    std::string Name;
+    PLAYER_TYPE Type;
 
 private:
 	AttackInfo DefaultAttack = {"Slap", true, 1, 1, 1.0f, 10.0f};
