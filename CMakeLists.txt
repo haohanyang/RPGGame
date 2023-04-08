@@ -22,7 +22,20 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
 endif()
 
 add_subdirectory(libs/pugixml)
+add_subdirectory(libs/enet)
+add_subdirectory(libs/spdlog)
+add_subdirectory(libs/flatbuffers)
 
+# enet wrapper
+add_library(net libs/net/enet_client.cpp libs/net/enet_server.cpp libs/net/serialize.cpp libs/net/format.cpp)
+target_include_directories(net PUBLIC libs/net/include libs/enet/include libs/spdlog/include libs/flatbuffers/include)
+target_link_libraries(net enet spdlog flatbuffers)
+
+add_executable(net_test libs/net/test/main.cpp)
+target_include_directories(net_test PUBLIC libs/net/include)
+target_link_libraries(net_test net)
+
+# game client
 add_executable(
         rpg_game_client
         client/main.cpp
@@ -43,8 +56,8 @@ add_executable(
         client/tile_map_io.cpp
         client/treasure.cpp
 )
-target_include_directories(rpg_game_client PUBLIC client/include)
-target_link_libraries(rpg_game_client pugixml raylib)
+target_include_directories(rpg_game_client PUBLIC client/include libs/spdlog/include)
+target_link_libraries(rpg_game_client pugixml raylib net)
 
 if (APPLE)
     target_link_libraries(rpg_game_client "-framework IOKit")
