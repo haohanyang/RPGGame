@@ -1,0 +1,7 @@
+table Pos {
+  message:string;
+  x:float;
+  y:float;
+}
+
+root_type Pos;
