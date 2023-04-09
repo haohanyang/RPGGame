@@ -14,41 +14,43 @@ void Server() {
 
 void ClientInput() {
     net::ENetClient client;
-    if (client.Connect("localhost", port) != 0) {
+    if (client.Connect("localhost", port, 0x2) != 0) {
         return;
     }
 
     while (true) {
-        std::string message;
+        uint8_t user;
         float x, y;
         std::cout << "Message:>";
-        std::cin >> message;
-        if (message == "q") {
+        std::cin >> user;
+        if (user == 0) {
             return;
         }
         std::cout << "x:>";
         std::cin >> x;
         std::cout << "y:>";
         std::cin >> y;
-        client.SendPos(message, x, y);
+        client.SendPosition(Player_Player1, x, y);
     }
 }
 
-void ClientSendPos(const std::string &message, float x, float y) {
+void ClientSendPos(uint8_t user, float x, float y) {
     net::ENetClient client;
-    if (client.Connect("localhost", port) != 0) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    if (client.Connect("localhost", port, int(x)) != 0) {
         return;
     }
-    client.SendPos(message, x, y);
+    client.SendPosition(Player_Player1, x, y);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
 
 int main() {
     spdlog::set_level(spdlog::level::debug);
     std::thread server_thread(Server);
-    std::thread client_thread1(ClientSendPos,"ms1", 1.0f, 1.0f);
-    std::thread client_thread2(ClientSendPos,"ms2", 1.0f, 1.0f);
-    std::thread client_thread3(ClientSendPos,"ms3", 1.0f, 1.0f);
+    std::thread client_thread1(ClientSendPos,1, 1.0f, 1.0f);
+    std::thread client_thread2(ClientSendPos,1, 2.0f, 1.0f);
+    std::thread client_thread3(ClientSendPos,2, 3.0f, 1.0f);
 
     server_thread.join();
     return 0;

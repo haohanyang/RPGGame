@@ -16,7 +16,7 @@ ENetClient::ENetClient() : Client(nullptr), Server(nullptr)
         return;
     }
 
-    Client = enet_host_create(nullptr, 1, NUM_CHANNELS,0,0);
+    Client = enet_host_create(nullptr, CLIENT_MAX_CONNECTIONS, NUM_CHANNELS,0,0);
     if (Client == nullptr) {
         spdlog::error("An error occurred while trying to create an ENet client host");
     }
@@ -28,6 +28,7 @@ ENetClient::~ENetClient()
     enet_host_destroy(Client);
     enet_deinitialize();
 }
+
 
 bool ENetClient::IsConnected()
 {
@@ -44,6 +45,7 @@ int ENetClient::Connect(const std::string& host, uint32_t port)
     ENetAddress address;
     enet_address_set_host(&address, host.c_str());
     address.port = port;
+
 
     Server = enet_host_connect(Client, &address, NUM_CHANNELS,0);
     if (Server == nullptr) {
@@ -64,51 +66,24 @@ int ENetClient::Connect(const std::string& host, uint32_t port)
 }
 
 
-void ENetClient::Poll()
+const Position* ENetClient::GetPosition(PlayerNumber player)
 {
-
-    if (!IsConnected()) {
-        spdlog::error("ENetClient is not connected to any server");
-        return;
-    }
-
     ENetEvent event;
-    while (true) {
-        auto res = enet_host_service(Client, &event, 1000);
-        if (res > 0) {
-            switch (event.type) {
-                case ENET_EVENT_TYPE_CONNECT: {
-                    spdlog::debug("(Client) A new server connected from {}:{}",
-                                  event.peer -> address.host,
-                                  event.peer -> address.port);
-                    break;
-                }
-                case ENET_EVENT_TYPE_RECEIVE: {
-                    spdlog::debug("(Client) A packet of length {} containing {} was received from {} on channel {}",
-                                  event.packet -> dataLength,
-                                  *event.packet -> data,
-                                  event.peer -> data,
-                                  event.channelID);
-                    enet_packet_destroy(event.packet);
-                    break;
-                }
-                case ENET_EVENT_TYPE_DISCONNECT: {
-                    spdlog::debug("(Client) Server from {}:{} disconnected.\n", event.peer->address.host, event.peer->address.port);
-                    break;
-                }
+    if (enet_host_service(Client, &event, 0))  {
+        if (event.type == ENET_EVENT_TYPE_RECEIVE) {
+            const auto *message = GetMessage(event.packet->data);
+            if (message->player() ==  player && message->content_type() == Content_Position) {
+                auto pos = static_cast<const Position*> (message->content());
+                return pos;
             }
-        } else if (res < 0) {
-            spdlog::error("(Client) Error occurred during polling");
-            break;
-        } else {
-            break;
         }
     }
+    return nullptr;
 }
 
-void ENetClient::SendPos(const std::string &message, float x, float y)
+void ENetClient::SendPosition(PlayerNumber player, float x, float y)
 {
-    auto *packet = Serialize(message, x, y);
+    auto *packet = SerializePos(player, x, y);
     if (enet_peer_send(Server,RELIABLE_CHANNEL,packet) == 0) {
         spdlog::debug("Message was sent");
         enet_host_flush(Client);

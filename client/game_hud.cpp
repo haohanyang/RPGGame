@@ -221,7 +221,7 @@ void GameHudScreen::Draw(PlayerData &player, float barHeight)
 
     if ((DrawButton(buttonX, buttonY, BagSprite, 0, GRAY, LIGHTGRAY) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) || IsKeyPressed(KEY_I))
     {
-        if (player.Type == PLAYER1)
+        if (player.Number == PlayerNumber_Player1)
             Player1InventoryOpen = !Player1InventoryOpen;
         else
             Player2InventoryOpen = !Player2InventoryOpen;
@@ -236,10 +236,10 @@ void GameHudScreen::Draw(PlayerData &player, float barHeight)
         DrawText(TextFormat("%0.0f", player.BuffLifetimeLeft), int(buttonX), int(buttonY + ButtonSize - 30), 30, RED);
     }
 
-    if (player.Type == PLAYER1 && Player1InventoryOpen)
+    if (player.Number == PlayerNumber_Player1 && Player1InventoryOpen)
         DrawInventory(player);
 
-    if (player.Type == PLAYER2 && Player2InventoryOpen)
+    if (player.Number == PlayerNumber_Player2 && Player2InventoryOpen)
         DrawInventory(player);
 
     if (HoveredItem != nullptr)

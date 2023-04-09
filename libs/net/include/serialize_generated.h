@@ -13,111 +13,226 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 23 &&
               FLATBUFFERS_VERSION_REVISION == 3,
              "Non-compatible flatbuffers version included");
 
-struct Pos;
-struct PosBuilder;
+struct Message;
+struct MessageBuilder;
 
-struct Pos FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
-  typedef PosBuilder Builder;
-  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_MESSAGE = 4,
-    VT_X = 6,
-    VT_Y = 8
+struct Position;
+
+enum Content : uint8_t {
+  Content_NONE = 0,
+  Content_Position = 1,
+  Content_MIN = Content_NONE,
+  Content_MAX = Content_Position
+};
+
+inline const Content (&EnumValuesContent())[2] {
+  static const Content values[] = {
+    Content_NONE,
+    Content_Position
   };
-  const ::flatbuffers::String *message() const {
-    return GetPointer<const ::flatbuffers::String *>(VT_MESSAGE);
+  return values;
+}
+
+inline const char * const *EnumNamesContent() {
+  static const char * const names[3] = {
+    "NONE",
+    "Position",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameContent(Content e) {
+  if (::flatbuffers::IsOutRange(e, Content_NONE, Content_Position)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesContent()[index];
+}
+
+template<typename T> struct ContentTraits {
+  static const Content enum_value = Content_NONE;
+};
+
+template<> struct ContentTraits<Position> {
+  static const Content enum_value = Content_Position;
+};
+
+bool VerifyContent(::flatbuffers::Verifier &verifier, const void *obj, Content type);
+bool VerifyContentVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
+
+enum PlayerNumber : int8_t {
+  PlayerNumber_Player1 = 0,
+  PlayerNumber_Player2 = 1,
+  PlayerNumber_MIN = PlayerNumber_Player1,
+  PlayerNumber_MAX = PlayerNumber_Player2
+};
+
+inline const PlayerNumber (&EnumValuesPlayerNumber())[2] {
+  static const PlayerNumber values[] = {
+    PlayerNumber_Player1,
+    PlayerNumber_Player2
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesPlayerNumber() {
+  static const char * const names[3] = {
+    "Player1",
+    "Player2",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNamePlayerNumber(PlayerNumber e) {
+  if (::flatbuffers::IsOutRange(e, PlayerNumber_Player1, PlayerNumber_Player2)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesPlayerNumber()[index];
+}
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Position FLATBUFFERS_FINAL_CLASS {
+ private:
+  float x_;
+  float y_;
+
+ public:
+  Position()
+      : x_(0),
+        y_(0) {
+  }
+  Position(float _x, float _y)
+      : x_(::flatbuffers::EndianScalar(_x)),
+        y_(::flatbuffers::EndianScalar(_y)) {
   }
   float x() const {
-    return GetField<float>(VT_X, 0.0f);
+    return ::flatbuffers::EndianScalar(x_);
   }
   float y() const {
-    return GetField<float>(VT_Y, 0.0f);
+    return ::flatbuffers::EndianScalar(y_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Position, 8);
+
+struct Message FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef MessageBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_PLAYER = 4,
+    VT_CONTENT_TYPE = 6,
+    VT_CONTENT = 8
+  };
+  PlayerNumber player() const {
+    return static_cast<PlayerNumber>(GetField<int8_t>(VT_PLAYER, 0));
+  }
+  Content content_type() const {
+    return static_cast<Content>(GetField<uint8_t>(VT_CONTENT_TYPE, 0));
+  }
+  const void *content() const {
+    return GetPointer<const void *>(VT_CONTENT);
+  }
+  template<typename T> const T *content_as() const;
+  const Position *content_as_Position() const {
+    return content_type() == Content_Position ? static_cast<const Position *>(content()) : nullptr;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_MESSAGE) &&
-           verifier.VerifyString(message()) &&
-           VerifyField<float>(verifier, VT_X, 4) &&
-           VerifyField<float>(verifier, VT_Y, 4) &&
+           VerifyField<int8_t>(verifier, VT_PLAYER, 1) &&
+           VerifyField<uint8_t>(verifier, VT_CONTENT_TYPE, 1) &&
+           VerifyOffset(verifier, VT_CONTENT) &&
+           VerifyContent(verifier, content(), content_type()) &&
            verifier.EndTable();
   }
 };
 
-struct PosBuilder {
-  typedef Pos Table;
+template<> inline const Position *Message::content_as<Position>() const {
+  return content_as_Position();
+}
+
+struct MessageBuilder {
+  typedef Message Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_message(::flatbuffers::Offset<::flatbuffers::String> message) {
-    fbb_.AddOffset(Pos::VT_MESSAGE, message);
+  void add_player(PlayerNumber player) {
+    fbb_.AddElement<int8_t>(Message::VT_PLAYER, static_cast<int8_t>(player), 0);
   }
-  void add_x(float x) {
-    fbb_.AddElement<float>(Pos::VT_X, x, 0.0f);
+  void add_content_type(Content content_type) {
+    fbb_.AddElement<uint8_t>(Message::VT_CONTENT_TYPE, static_cast<uint8_t>(content_type), 0);
   }
-  void add_y(float y) {
-    fbb_.AddElement<float>(Pos::VT_Y, y, 0.0f);
+  void add_content(::flatbuffers::Offset<void> content) {
+    fbb_.AddOffset(Message::VT_CONTENT, content);
   }
-  explicit PosBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+  explicit MessageBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  ::flatbuffers::Offset<Pos> Finish() {
+  ::flatbuffers::Offset<Message> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = ::flatbuffers::Offset<Pos>(end);
+    auto o = ::flatbuffers::Offset<Message>(end);
     return o;
   }
 };
 
-inline ::flatbuffers::Offset<Pos> CreatePos(
+inline ::flatbuffers::Offset<Message> CreateMessage(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    ::flatbuffers::Offset<::flatbuffers::String> message = 0,
-    float x = 0.0f,
-    float y = 0.0f) {
-  PosBuilder builder_(_fbb);
-  builder_.add_y(y);
-  builder_.add_x(x);
-  builder_.add_message(message);
+    PlayerNumber player = PlayerNumber_Player1,
+    Content content_type = Content_NONE,
+    ::flatbuffers::Offset<void> content = 0) {
+  MessageBuilder builder_(_fbb);
+  builder_.add_content(content);
+  builder_.add_content_type(content_type);
+  builder_.add_player(player);
   return builder_.Finish();
 }
 
-inline ::flatbuffers::Offset<Pos> CreatePosDirect(
-    ::flatbuffers::FlatBufferBuilder &_fbb,
-    const char *message = nullptr,
-    float x = 0.0f,
-    float y = 0.0f) {
-  auto message__ = message ? _fbb.CreateString(message) : 0;
-  return CreatePos(
-      _fbb,
-      message__,
-      x,
-      y);
+inline bool VerifyContent(::flatbuffers::Verifier &verifier, const void *obj, Content type) {
+  switch (type) {
+    case Content_NONE: {
+      return true;
+    }
+    case Content_Position: {
+      return verifier.VerifyField<Position>(static_cast<const uint8_t *>(obj), 0, 4);
+    }
+    default: return true;
+  }
 }
 
-inline const Pos *GetPos(const void *buf) {
-  return ::flatbuffers::GetRoot<Pos>(buf);
+inline bool VerifyContentVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
+  if (!values || !types) return !values && !types;
+  if (values->size() != types->size()) return false;
+  for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
+    if (!VerifyContent(
+        verifier,  values->Get(i), types->GetEnum<Content>(i))) {
+      return false;
+    }
+  }
+  return true;
 }
 
-inline const Pos *GetSizePrefixedPos(const void *buf) {
-  return ::flatbuffers::GetSizePrefixedRoot<Pos>(buf);
+inline const Message *GetMessage(const void *buf) {
+  return ::flatbuffers::GetRoot<Message>(buf);
 }
 
-inline bool VerifyPosBuffer(
+inline const Message *GetSizePrefixedMessage(const void *buf) {
+  return ::flatbuffers::GetSizePrefixedRoot<Message>(buf);
+}
+
+inline bool VerifyMessageBuffer(
     ::flatbuffers::Verifier &verifier) {
-  return verifier.VerifyBuffer<Pos>(nullptr);
+  return verifier.VerifyBuffer<Message>(nullptr);
 }
 
-inline bool VerifySizePrefixedPosBuffer(
+inline bool VerifySizePrefixedMessageBuffer(
     ::flatbuffers::Verifier &verifier) {
-  return verifier.VerifySizePrefixedBuffer<Pos>(nullptr);
+  return verifier.VerifySizePrefixedBuffer<Message>(nullptr);
 }
 
-inline void FinishPosBuffer(
+inline void FinishMessageBuffer(
     ::flatbuffers::FlatBufferBuilder &fbb,
-    ::flatbuffers::Offset<Pos> root) {
+    ::flatbuffers::Offset<Message> root) {
   fbb.Finish(root);
 }
 
-inline void FinishSizePrefixedPosBuffer(
+inline void FinishSizePrefixedMessageBuffer(
     ::flatbuffers::FlatBufferBuilder &fbb,
-    ::flatbuffers::Offset<Pos> root) {
+    ::flatbuffers::Offset<Message> root) {
   fbb.FinishSizePrefixed(root);
 }
 

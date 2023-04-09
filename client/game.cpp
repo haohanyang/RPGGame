@@ -11,11 +11,15 @@
 #include "raylib.h"
 #include "raymath.h"
 
-PlayerData Player1("Player1", PLAYER1);
-PlayerData Player2("Player2", PLAYER2);
+#include "net.h"
+
+extern net::ENetClient ENetClient;
+
+PlayerData Player;
+PlayerData AnotherPlayer;
 
 
-PlayerData::PlayerData(std::string name, PLAYER_TYPE type) : Name(name), Type(type) {
+PlayerData::PlayerData(const std::string &name, PlayerNumber number) : Name(name), Number(number) {
 
 }
 const AttackInfo &PlayerData::GetAttack() const
@@ -46,43 +50,43 @@ float GetGameTime() { return float(GameClock); }
 std::vector<TreasureInstance> ItemDrops;
 std::vector<MobInstance> Mobs;
 
-GameHudScreen GameHud(Player1, Player2);
-// GameHudScreen GameHud2(Player2);
+GameHudScreen GameHud(Player, AnotherPlayer);
+// GameHudScreen GameHud2(AnotherPlayer);
 
 void LoadLevel(const char *level)
 {
 	LoadMap(level);
-	Player1.Sprite = AddSprite(PlayerSprite, Player1.Position);
-	Player1.Sprite->Bobble = true;
-	Player1.Sprite->Shadow = true;
+	Player.Sprite = AddSprite(PlayerSprite, Player.Position);
+	Player.Sprite->Bobble = true;
+	Player.Sprite->Shadow = true;
 
-	Player2.Sprite = AddSprite(PlayerSprite, Player2.Position);
-	Player2.Sprite->Bobble = true;
-	Player2.Sprite->Shadow = true;
+	AnotherPlayer.Sprite = AddSprite(PlayerSprite, AnotherPlayer.Position);
+	AnotherPlayer.Sprite->Bobble = true;
+	AnotherPlayer.Sprite->Shadow = true;
 }
 
 void StartLevel()
 {
 	GameClock = 0;
 
-	Player1.LastConsumeable = -100;
-	Player1.LastAttack = -100;
+	Player.LastConsumeable = -100;
+	Player.LastAttack = -100;
 
-	Player2.LastConsumeable = -100;
-	Player2.LastAttack = -100;
+	AnotherPlayer.LastConsumeable = -100;
+	AnotherPlayer.LastAttack = -100;
 
 	auto *spawn = GetFirstMapObjectOfType(PlayerSpawnType);
 	if (spawn != nullptr)
 	{
-		Player1.Position.x = spawn->Bounds.x;
-		Player1.Position.y = spawn->Bounds.y;
+		Player.Position.x = spawn->Bounds.x;
+		Player.Position.y = spawn->Bounds.y;
 
-		Player2.Position.x = spawn->Bounds.x;
-		Player2.Position.y = spawn->Bounds.y;
+		AnotherPlayer.Position.x = spawn->Bounds.x;
+		AnotherPlayer.Position.y = spawn->Bounds.y;
 	}
 
-	Player1.TargetActive = false;
-	Player2.TargetActive = false;
+	Player.TargetActive = false;
+	AnotherPlayer.TargetActive = false;
 
 	Exits.clear();
 	for (const TileObject *exit : GetMapObjectsOfType(ExitType))
@@ -150,7 +154,7 @@ void GetPlayerInput()
 
 	// User1 input
 	bool player1KeyPressed = false;
-	Vector2 player1TargetPosition = Player1.Position;
+	Vector2 player1TargetPosition = Player.Position;
 
 	if (IsKeyDown(KEY_LEFT))
 	{
@@ -177,40 +181,42 @@ void GetPlayerInput()
 	}
 
 	// User2 input
-	bool player2KeyPressed = false;
-	Vector2 player2TargetPosition = Player2.Position;
-
-	if (IsKeyDown(KEY_A))
-	{
-		player2TargetPosition.x -= moveUnit;
-		player2KeyPressed = true;
-	}
-
-	if (IsKeyDown(KEY_D))
-	{
-		player2TargetPosition.x += moveUnit;
-		player2KeyPressed = true;
-	}
-
-	if (IsKeyDown(KEY_W))
-	{
-		player2TargetPosition.y -= moveUnit;
-		player2KeyPressed = true;
-	}
-
-	if (IsKeyDown(KEY_S))
-	{
-		player2TargetPosition.y += moveUnit;
-		player2KeyPressed = true;
-	}
+	bool AnotherPlayerKeyPressed = false;
+	// Vector2 AnotherPlayerTargetPosition = AnotherPlayer.Position;
+//
+//	if (IsKeyDown(KEY_A))
+//	{
+//		AnotherPlayerTargetPosition.x -= moveUnit;
+//		AnotherPlayerKeyPressed = true;
+//	}
+//
+//	if (IsKeyDown(KEY_D))
+//	{
+//		AnotherPlayerTargetPosition.x += moveUnit;
+//		AnotherPlayerKeyPressed = true;
+//	}
+//
+//	if (IsKeyDown(KEY_W))
+//	{
+//		AnotherPlayerTargetPosition.y -= moveUnit;
+//		AnotherPlayerKeyPressed = true;
+//	}
+//
+//	if (IsKeyDown(KEY_S))
+//	{
+//		AnotherPlayerTargetPosition.y += moveUnit;
+//		AnotherPlayerKeyPressed = true;
+//	}
 
 	// check for key inputs
 	if (player1KeyPressed)
 	{
+        // Send location to server
+        ENetClient.SendPosition(Player.Number, Player.Position.x, Player.Position.y);
 		if (PointInMap(player1TargetPosition))
 		{
-			Player1.TargetActive = true;
-			Player1.Target = player1TargetPosition;
+			Player.TargetActive = true;
+			Player.Target = player1TargetPosition;
 		}
 
 		TargetChest = nullptr;
@@ -228,25 +234,28 @@ void GetPlayerInput()
 			{
 				TargetMob = &mob;
 
-				if (Vector2Distance(Player1.Position, mob.Position) <= Player1.GetAttack().Range + 40)
-					Player1.TargetActive = false;
+				if (Vector2Distance(Player.Position, mob.Position) <= Player.GetAttack().Range + 40)
+					Player.TargetActive = false;
 				break;
 			}
 		}
 	}
 
-	if (player2KeyPressed)
+    // Here we
+    auto pos = ENetClient.GetPosition(AnotherPlayer.Number);
+	if (pos != nullptr)
 	{
-		if (PointInMap(player2TargetPosition))
+        Vector2 AnotherPlayerTargetPosition {pos->x(), pos->y()};
+		if (PointInMap(AnotherPlayerTargetPosition))
 		{
-			Player2.TargetActive = true;
-			Player2.Target = player2TargetPosition;
+			AnotherPlayer.TargetActive = true;
+			AnotherPlayer.Target = AnotherPlayerTargetPosition;
 		}
 
 		TargetChest = nullptr;
 		for (auto &chest : Chests)
 		{
-			if (CheckCollisionPointRec(player2TargetPosition, chest.Bounds))
+			if (CheckCollisionPointRec(AnotherPlayerTargetPosition, chest.Bounds))
 			{
 				TargetChest = &chest;
 			}
@@ -254,12 +263,12 @@ void GetPlayerInput()
 
 		for (auto &mob : Mobs)
 		{
-			if (CheckCollisionPointCircle(player2TargetPosition, mob.Position, 20))
+			if (CheckCollisionPointCircle(AnotherPlayerTargetPosition, mob.Position, 20))
 			{
 				TargetMob = &mob;
 
-				if (Vector2Distance(Player2.Position, mob.Position) <= Player2.GetAttack().Range + 40)
-					Player2.TargetActive = false;
+				if (Vector2Distance(AnotherPlayer.Position, mob.Position) <= AnotherPlayer.GetAttack().Range + 40)
+					AnotherPlayer.TargetActive = false;
 				break;
 			}
 		}
@@ -279,13 +288,13 @@ void PlaceItemDrop(TreasureInstance &item, Vector2 &dropPoint)
 		Vector2 vec = {cosf(angle * DEG2RAD), sinf(angle * DEG2RAD)};
 		vec = Vector2Add(dropPoint, Vector2Scale(vec, 45));
 
-		if (PointInMap(vec) && Vector2Distance(vec, Player1.Position) > Player1.PickupDistance)
+		if (PointInMap(vec) && Vector2Distance(vec, Player.Position) > Player.PickupDistance)
 		{
 			item.Position = vec;
 			valid = true;
 		}
 
-		if (PointInMap(vec) && Vector2Distance(vec, Player2.Position) > Player1.PickupDistance)
+		if (PointInMap(vec) && Vector2Distance(vec, AnotherPlayer.Position) > Player.PickupDistance)
 		{
 			item.Position = vec;
 			valid = true;
@@ -498,7 +507,7 @@ void PlayerData::ApplyActions()
 	if (TargetChest != nullptr)
 	{
 		Vector2 center = {TargetChest->Bounds.x + TargetChest->Bounds.width / 2, TargetChest->Bounds.y + TargetChest->Bounds.height / 2};
-        // TODO: player2 cannot open the chest
+
 		float distance = Vector2Distance(center, Position);
 		if (distance <= 50)
 		{
@@ -587,11 +596,11 @@ void UpdateMobs()
 	// check for mob actions
 	for (auto &mob : Mobs)
 	{
-		Vector2 vecToPlayer1 = Vector2Subtract(Player1.Position, mob.Position);
+		Vector2 vecToPlayer1 = Vector2Subtract(Player.Position, mob.Position);
 		float distance1 = Vector2Length(vecToPlayer1);
 
-		Vector2 vecToPlayer2 = Vector2Subtract(Player2.Position, mob.Position);
-		float distance2 = Vector2Length(vecToPlayer2);
+		Vector2 vecToAnotherPlayer = Vector2Subtract(AnotherPlayer.Position, mob.Position);
+		float distance2 = Vector2Length(vecToAnotherPlayer);
 
 		PlayerData *player;
 		float distance;
@@ -599,14 +608,14 @@ void UpdateMobs()
 		Vector2 &vecToPlayer = vecToPlayer1;
 		if (distance1 < distance2)
 		{
-			player = &Player1;
+			player = &Player;
 			distance = distance1;
 		}
 		else
 		{
-			player = &Player2;
+			player = &AnotherPlayer;
 			distance = distance2;
-			vecToPlayer = vecToPlayer2;
+			vecToPlayer = vecToAnotherPlayer;
 		}
 
 		MOB *monsterInfo = GetMob(mob.MobId);
@@ -719,8 +728,8 @@ MobInstance *PlayerData::GetNearestMobInSight(std::vector<MobInstance> &mobs)
 
 void UpdateSprites()
 {
-	Player1.UpdateSprite();
-	Player2.UpdateSprite();
+	Player.UpdateSprite();
+	AnotherPlayer.UpdateSprite();
 	UpdateMobSprites();
 }
 
@@ -739,34 +748,34 @@ void UpdateGame()
 		}
 	}
 
-	if (!IsWindowFocused())
-	{
-		PauseGame();
-		return;
-	}
+//	if (!IsWindowFocused())
+//	{
+//		PauseGame();
+//		return;
+//	}
 
 	// only update our game clock when we are unpaused
 	GameClock += GetFrameTime();
 
 	GetPlayerInput();
-	Player1.Move();
-    Player2.Move();
+	Player.Move();
+    AnotherPlayer.Move();
 
-	Player1.ApplyActions();
-	Player2.ApplyActions();
+	Player.ApplyActions();
+	AnotherPlayer.ApplyActions();
 
 	UpdateMobs();
 
-	if (Player1.Health < 0 || Player2.Health < 0)
+	if (Player.Health < 0 || AnotherPlayer.Health < 0)
 	{
 		// you died, change to the end screen
-		EndGame(false, Player1.Gold + Player2.Gold);
+		EndGame(false, Player.Gold + AnotherPlayer.Gold);
 	}
 
 	UpdateSprites();
 
-	SetVisiblePoint(Player1.Position);
-	SetVisiblePoint(Player2.Position);
+	SetVisiblePoint(Player.Position);
+	SetVisiblePoint(AnotherPlayer.Position);
 }
 
 void PlayerData::UseConsumable(Item *item)

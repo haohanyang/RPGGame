@@ -33,6 +33,8 @@
 #include "extra.h"
 #include <vector>
 
+
+#include "serialize_generated.h"
 void InitGame();
 void ActivateGame();
 void QuitGame();
@@ -45,16 +47,11 @@ struct InventoryContents
 	int Quantity;
 };
 
-enum PLAYER_TYPE {
-    PLAYER1,
-    PLAYER2,
-    SINGLE_PLAYER
-};
 
 class PlayerData
 {
 public:
-    PlayerData(std::string name, PLAYER_TYPE type);
+    PlayerData(const std::string& name = "No name", PlayerNumber number = PlayerNumber_Player1);
 	Vector2 Position = {0, 0};
 	SpriteInstance *Sprite = nullptr;
 
@@ -66,7 +63,7 @@ public:
 	// player stats
 	int Health = 100;
 	int MaxHealth = 100;
-
+    int index = -1;
 	int Gold = 0;
 
 	const AttackInfo &GetAttack() const;
@@ -100,7 +97,7 @@ public:
 	float PickupDistance = 20;
 
     std::string Name;
-    PLAYER_TYPE Type;
+    PlayerNumber Number;
 
 private:
 	AttackInfo DefaultAttack = {"Slap", true, 1, 1, 1.0f, 10.0f};

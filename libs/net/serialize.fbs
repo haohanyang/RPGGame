@@ -1,7 +1,14 @@
-table Pos {
-  message:string;
+union Content { Position }
+enum PlayerNumber:byte { Player1, Player2 }
+
+table Message {
+    player:PlayerNumber;
+    content:Content;
+}
+
+struct Position {
   x:float;
   y:float;
 }
 
-root_type Pos;
+root_type Message;

@@ -27,7 +27,7 @@ add_subdirectory(libs/spdlog)
 add_subdirectory(libs/flatbuffers)
 
 # enet wrapper
-add_library(net libs/net/enet_client.cpp libs/net/enet_server.cpp libs/net/serialize.cpp libs/net/format.cpp)
+add_library(net libs/net/enet_client.cpp libs/net/enet_server.cpp libs/net/serialize.cpp)
 target_include_directories(net PUBLIC libs/net/include libs/enet/include libs/spdlog/include libs/flatbuffers/include)
 target_link_libraries(net enet spdlog flatbuffers)
 
@@ -58,6 +58,11 @@ add_executable(
 )
 target_include_directories(rpg_game_client PUBLIC client/include libs/spdlog/include)
 target_link_libraries(rpg_game_client pugixml raylib net)
+
+# game server
+add_executable(rpg_game_server server/main.cpp)
+target_include_directories(rpg_game_server PUBLIC libs/spdlog/include libs/net/include)
+target_link_libraries(rpg_game_server net spdlog)
 
 if (APPLE)
     target_link_libraries(rpg_game_client "-framework IOKit")

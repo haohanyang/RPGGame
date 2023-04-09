@@ -34,6 +34,8 @@
 
 #include "raylib.h"
 
+#include "net.h"
+
 // all the states the program can be in 
 enum class ApplicationStates
 {
@@ -46,6 +48,13 @@ enum class ApplicationStates
 	Quitting
 };
 ApplicationStates ApplicationState = ApplicationStates::Startup;
+
+// User state
+extern PlayerData Player;
+extern PlayerData AnotherPlayer;
+
+// network client
+net::ENetClient ENetClient;
 
 // the main menu screen
 // based on the screen class
@@ -265,8 +274,21 @@ bool SearchAndSetResourceDir(const char* folderName)
 }
 
 // the main application loop
-int main()
+int main(int argc, char *argv[])
 {
+
+    if (argc == 3) {
+        Player.Name = argv[2];
+        int num = std::stoi(argv[1]);
+        if (num == 0) {
+            Player.Number = PlayerNumber_Player1;
+            AnotherPlayer.Number = PlayerNumber_Player2;
+        } else {
+            Player.Number = PlayerNumber_Player2;
+            AnotherPlayer.Number = PlayerNumber_Player1;
+        }
+    }
+
 	// setup the window
 	SetConfigFlags(FLAG_VSYNC_HINT);
 	InitWindow(1280,700,"RPG Example");
@@ -277,6 +299,11 @@ int main()
 	InitResources();
 
 	ApplicationState = ApplicationStates::Loading;
+
+    if (ENetClient.Connect("localhost", 8000) != 0) {
+        TraceLog(LOG_ERROR, "Failed to connect to server");
+        return 1;
+    }
 
 	// game loop
 	while (!WindowShouldClose() && ApplicationState != ApplicationStates::Quitting)
