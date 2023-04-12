@@ -1,5 +1,4 @@
-#ifndef EXTRA_H
-#define EXTRA_H
+#pragma once
 
 #include "raylib.h"
 #include <string>
@@ -9,7 +8,8 @@ struct Exit
     std::string Destination;
 };
 
-struct Positions {
+struct Positions
+{
     Vector2 Player1Position;
     Vector2 Player2Position;
 };
@@ -31,5 +31,3 @@ struct MobInstance
     bool Triggered = false;
     float LastAttack = -100;
 };
-
-#endif //EXTRA_H
