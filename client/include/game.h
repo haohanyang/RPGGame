@@ -23,86 +23,37 @@
  *
  **********************************************************************************************/
 
-#pragma once
+#ifndef GAME_H
+#define GAME_H
 
-#include "raylib.h"
-#include "sprites.h"
-#include "map.h"
-#include "combat.h"
-#include "treasure.h"
-#include "extra.h"
-#include <vector>
 
-void InitGame();
-void ActivateGame();
-void QuitGame();
-void UpdateGame();
+#include "player.h"
+#include "game.h"
+#include "game_hud.h"
 
-// game state data
-struct InventoryContents
-{
-	int ItemId;
-	int Quantity;
-};
 
-enum PLAYER_TYPE {
-    PLAYER1,
-    PLAYER2,
-    SINGLE_PLAYER
-};
-
-class PlayerData
-{
+class Game {
 public:
-    PlayerData(std::string name, PLAYER_TYPE type);
-	Vector2 Position = {0, 0};
-	SpriteInstance *Sprite = nullptr;
+    Player Player1;
+    Player Player2;
+    GameState State;
+    GameHudScreen GameHud;
 
-	bool TargetActive = false;
-	Vector2 Target = {0, 0};
+    Game();
+    void InitGame();
+    void ActivateGame();
+    void QuitGame();
+    void UpdateGame();
 
-	float Speed = 100;
+    void LoadLevel(const char *level);
+    void StartLevel();
 
-	// player stats
-	int Health = 100;
-	int MaxHealth = 100;
+    void GetPlayerInput();
 
-	int Gold = 0;
+    void UpdateMobs();
+    Player* GetClosestPlayer(const Vector2 &position);
 
-	const AttackInfo &GetAttack() const;
-	const int GetDefense() const;
-	TreasureInstance RemoveInventoryItem(int slot, int quantity);
-	bool PickupItem(TreasureInstance &drop);
-	void UseConsumable(Item *item);
-	void ActivateItem(int slotIndex);
-	void DropItem(int item);
-    void Move();
-    void ApplyActions();
-    void UpdateSprite();
-
-    MobInstance* GetNearestMobInSight(std::vector<MobInstance> &mobs);
-
-	float LastAttack = 0;
-	float LastConsumeable = 0;
-	float AttackCooldown = 0;
-	float ItemCooldown = 0;
-
-	int BuffItem = -1;
-	float BuffLifetimeLeft = 0;
-
-	int BuffDefense = 0;
-
-	// inventory
-	int EquipedWeapon = -1;
-	int EquipedArmor = -1;
-	std::vector<InventoryContents> BackpackContents;
-
-	float PickupDistance = 20;
-
-    std::string Name;
-    PLAYER_TYPE Type;
-
-private:
-	AttackInfo DefaultAttack = {"Slap", true, 1, 1, 1.0f, 10.0f};
-	DefenseInfo DefaultDefense = {0};
+    void UpdateSprites();
 };
+
+#endif

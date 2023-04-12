@@ -55,6 +55,8 @@ add_executable(
         client/tile_map_drawing.cpp
         client/tile_map_io.cpp
         client/treasure.cpp
+        client/game_state.cpp
+        client/player.cpp
 )
 target_include_directories(rpg_game_client PUBLIC client/include libs/spdlog/include)
 target_link_libraries(rpg_game_client pugixml raylib net)

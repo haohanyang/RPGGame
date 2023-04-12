@@ -1,15 +1,17 @@
-//
-// Created by Haohan Yang on 2023-04-05.
-//
-
 #ifndef EXTRA_H
 #define EXTRA_H
+
 #include "raylib.h"
 #include <string>
 struct Exit
 {
     Rectangle Bounds;
     std::string Destination;
+};
+
+struct Positions {
+    Vector2 Player1Position;
+    Vector2 Player2Position;
 };
 
 struct Chest

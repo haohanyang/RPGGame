@@ -28,7 +28,6 @@
 #include "main.h"
 #include "map.h"
 #include "pause.h"
-#include "resource_ids.h"
 #include "screens.h"
 #include "audio.h"
 
@@ -46,6 +45,8 @@ enum class ApplicationStates
 	Quitting
 };
 ApplicationStates ApplicationState = ApplicationStates::Startup;
+Game Game;
+
 
 // the main menu screen
 // based on the screen class
@@ -76,6 +77,7 @@ public:
 			QuitApplication();
 	}
 };
+
 MainMenuScreen MainMenu;
 
 // the game over screen
@@ -150,10 +152,10 @@ void SetupWindow()
 }
 
 // called by the loading system when all assets are loaded
-void LoadComplete()
+void LoadComplete(MainMenuScreen *m)
 {
 	ApplicationState = ApplicationStates::Menu;
-	SetActiveScreen(&MainMenu);
+	SetActiveScreen(m);
 
 	// load background world so we have something to look at behind the menu
 	LoadMap("maps/menu_map.tmx");
@@ -164,7 +166,7 @@ void GoToMainMenu()
 {
 	// quit our game, if our game was running
 	if (ApplicationState == ApplicationStates::Running || ApplicationState == ApplicationStates::Paused)
-		QuitGame();
+		Game.QuitGame();
 
 	// start our background music again
 	StartBGM("sounds/Flowing Rocks.ogg");
@@ -172,6 +174,16 @@ void GoToMainMenu()
 	// go back to the main menu like we did when we started up
 	LoadComplete();
 }
+
+void LoadComplete()
+{
+    ApplicationState = ApplicationStates::Menu;
+    SetActiveScreen(&MainMenu);
+
+    // load background world so we have something to look at behind the menu
+    LoadMap("maps/menu_map.tmx");
+}
+
 
 // called by the main menu to check for exit
 void UpdateMainMenu()
@@ -186,7 +198,7 @@ void StartGame()
 	ApplicationState = ApplicationStates::Running;
 	SetActiveScreen(nullptr);
 	StopBGM();
-	InitGame();
+	Game.InitGame();
 }
 
 // called when the menu wants to pause the game
@@ -200,7 +212,7 @@ void ResumeGame()
 {
 	ApplicationState = ApplicationStates::Running;
 	SetActiveScreen(nullptr);
-	ActivateGame();
+	Game.ActivateGame();
 }
 
 // called by the game when it is over, by win or loss
@@ -267,6 +279,8 @@ bool SearchAndSetResourceDir(const char* folderName)
 // the main application loop
 int main()
 {
+
+
 	// setup the window
 	SetConfigFlags(FLAG_VSYNC_HINT);
 	InitWindow(1280,700,"RPG Example");
@@ -277,6 +291,8 @@ int main()
 	InitResources();
 
 	ApplicationState = ApplicationStates::Loading;
+
+
 
 	// game loop
 	while (!WindowShouldClose() && ApplicationState != ApplicationStates::Quitting)
@@ -293,7 +309,7 @@ int main()
 			break;
 
 		case ApplicationStates::Running:
-			UpdateGame();
+			Game.UpdateGame();
 			break;
 
 		case ApplicationStates::Paused: 

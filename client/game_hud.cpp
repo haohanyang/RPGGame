@@ -29,7 +29,7 @@
 
 #include "raylib.h"
 
-GameHudScreen::GameHudScreen(PlayerData &player1, PlayerData &player2)
+GameHudScreen::GameHudScreen(Player &player1, Player &player2)
 	: Screen(), Player1(player1), Player2(player2)
 {
 }
@@ -44,7 +44,7 @@ void GameHudScreen::ShowItemToolTip(const Item *item, const Rectangle &rect)
 }
 
 
-void GameHudScreen::DrawInventory(PlayerData &player)
+void GameHudScreen::DrawInventory(Player &player)
 {
     Rectangle inventoryWindowRect = {GetScreenWidth() - 475.0f, GetScreenHeight() - 500.0f, 354, 400.0f};
     Rectangle shadowRect = inventoryWindowRect;
@@ -108,18 +108,20 @@ void GameHudScreen::DrawInventory(PlayerData &player)
                     if (hovered)
                     {
                         HoveredItem = item;
+                        Positions positions {Player1.Position, Player2.Position};
+
                         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
                         {
                             if (item->IsActivatable())
-                                player.ActivateItem(itemIndex);
+                                player.ActivateItem(positions, itemIndex);
                             else if (item->IsWeapon())
-                                player.ActivateItem(itemIndex);
+                                player.ActivateItem(positions,itemIndex);
                             else if (item->IsArmor())
-                                player.ActivateItem(itemIndex);
+                                player.ActivateItem(positions,itemIndex);
                         }
                         else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON))
                         {
-                            player.DropItem(itemIndex);
+                            player.DropItem(positions,itemIndex);
                         }
                     }
                 }
@@ -135,7 +137,7 @@ void GameHudScreen::Draw() {
     Draw(Player2, GetScreenHeight() - 80.0f); // lower
 }
 
-void GameHudScreen::Draw(PlayerData &player, float barHeight)
+void GameHudScreen::Draw(Player &player, float barHeight)
 {
     // background
     DrawRectangleRec(Rectangle{0, barHeight, float(GetScreenWidth()), 80}, ColorAlpha(DARKGRAY, 0.25f));
@@ -150,7 +152,7 @@ void GameHudScreen::Draw(PlayerData &player, float barHeight)
     float healthBarWidth = 300;
     DrawRectangleLinesEx(Rectangle{20, barHeight + 30, healthBarWidth, 32}, 1, WHITE);
 
-    float healthPram = player.Health / float(player.MaxHealth);
+    float healthPram = player.Health / float(MaxHealth);
     DrawRectangleRec(Rectangle{22, barHeight + 32, healthBarWidth * healthPram - 4, 28}, RED);
 
     // clear the hover item from last frame
@@ -212,16 +214,19 @@ void GameHudScreen::Draw(PlayerData &player, float barHeight)
             }
         }
     }
+    Positions positions {Player1.Position, Player2.Position};
 
-    if (activatedItem != -1)
-        player.ActivateItem(activatedItem);
+    if (activatedItem != -1) {
+        player.ActivateItem(positions, activatedItem);
+    }
+
 
     // backpack buttons
     buttonX += ButtonSize + 4;
 
     if ((DrawButton(buttonX, buttonY, BagSprite, 0, GRAY, LIGHTGRAY) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) || IsKeyPressed(KEY_I))
     {
-        if (player.Type == PLAYER1)
+        if (player.Id == 1)
             Player1InventoryOpen = !Player1InventoryOpen;
         else
             Player2InventoryOpen = !Player2InventoryOpen;
@@ -236,10 +241,10 @@ void GameHudScreen::Draw(PlayerData &player, float barHeight)
         DrawText(TextFormat("%0.0f", player.BuffLifetimeLeft), int(buttonX), int(buttonY + ButtonSize - 30), 30, RED);
     }
 
-    if (player.Type == PLAYER1 && Player1InventoryOpen)
+    if (player.Id == 1 && Player1InventoryOpen)
         DrawInventory(player);
 
-    if (player.Type == PLAYER2 && Player2InventoryOpen)
+    if (player.Id == 2 && Player2InventoryOpen)
         DrawInventory(player);
 
     if (HoveredItem != nullptr)

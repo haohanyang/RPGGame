@@ -26,27 +26,28 @@
 #pragma once
 
 #include "screens.h"
-#include "game.h"
+#include "player.h"
 #include "items.h"
 
 class GameHudScreen : public Screen
 {
 public:
-	GameHudScreen(PlayerData &player1, PlayerData &player2);
+	GameHudScreen(Player &player1, Player &player2);
 	void Draw() override;
-    void Draw(PlayerData &player, const float barHeight);
-	PlayerData& Player1;
-    PlayerData& Player2;
+    void Draw(Player &player, const float barHeight);
+	Player& Player1;
+    Player& Player2;
 
     bool Player1InventoryOpen = false;
     bool Player2InventoryOpen = false;
 
 private:
 	bool DrawButton(float x, float y, int itemId = -1, int quantity = 1, Color border = BROWN, Color center = BEIGE);
-	void DrawInventory(PlayerData &player);
+	void DrawInventory(Player &player);
     void ShowItemToolTip(const Item* item, const Rectangle& rect);
 
 	float ButtonSize = 70;
 	float ButtonInset = 6;
 	const Item* HoveredItem = nullptr;
+
 };
