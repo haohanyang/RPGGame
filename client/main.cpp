@@ -281,6 +281,8 @@ int main(int argc, char *argv[])
         Game.Player.Id = id;
         Game.Player.Name = "Player" + std::to_string(id);
         Game.Player.ENetClient = net::ENetClient::Create(id);
+        Game.Player.ENetClient->TraceLog = TraceLog;
+
 
         Game.Partner.Id = 3 - id;
         Game.Partner.Name = "Player" + std::to_string(3 - id);

@@ -38,7 +38,6 @@ void GameHudScreen::ShowItemToolTip(const Item *item, const Rectangle &rect)
 {
     if (item == nullptr || !CheckCollisionPointRec(GetMousePosition(), rect))
         return;
-
     DrawRectangleRec(Rectangle{rect.x, rect.y, 100, 100}, ColorAlpha(BLACK, 0.75f));
     DrawText(item->Name.c_str(), int(rect.x), int(rect.y), 10, WHITE);
 }

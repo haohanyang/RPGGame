@@ -37,6 +37,8 @@ public:
     int Connect(const std::string &host, uint32_t port);
     const Position *GetPosition(uint8_t playerId);
     void SendPosition(float x, float y);
+    // int logType, const char *text, ..
+    void (*TraceLog)(int, const char *...);
 private:
     uint8_t Id;
     ENetHost *Client;
