@@ -10,7 +10,7 @@
 #include "raymath.h"
 
 Game::Game()
-    : State(), Player1(1, "Player1", State), Player2(2, "Player2", State), GameHud(Player1, Player2)
+    : State(), Player(1, State), Partner(2, State), GameHud(Player, Partner)
 {
 
 }
@@ -18,39 +18,39 @@ Game::Game()
 void Game::LoadLevel(const char *level)
 {
     LoadMap(level);
-    Player1.Sprite = AddSprite(PlayerSprite, Player1.Position);
-    Player1.Sprite->Bobble = true;
-    Player1.Sprite->Shadow = true;
+    Player.Sprite = AddSprite(PlayerSprite, Player.Position);
+    Player.Sprite->Bobble = true;
+    Player.Sprite->Shadow = true;
 
-    Player2.Sprite = AddSprite(PlayerSprite, Player2.Position);
-    Player2.Sprite->Bobble = true;
-    Player2.Sprite->Shadow = true;
+    Partner.Sprite = AddSprite(PlayerSprite, Partner.Position);
+    Partner.Sprite->Bobble = true;
+    Partner.Sprite->Shadow = true;
 }
 
 void Game::StartLevel()
 {
     State.GameClock = 0;
 
-    Player1.LastConsumeable = -100;
-    Player1.LastAttack = -100;
+    Player.LastConsumeable = -100;
+    Player.LastAttack = -100;
 
-    Player2.LastConsumeable = -100;
-    Player2.LastAttack = -100;
+    Partner.LastConsumeable = -100;
+    Partner.LastAttack = -100;
 
-    Player1.Waiting = false;
-    Player2.Waiting = false;
+    Player.Waiting = false;
+    Partner.Waiting = false;
 
     auto *spawn = GetFirstMapObjectOfType(PlayerSpawnType);
     if (spawn != nullptr) {
-        Player1.Position.x = spawn->Bounds.x;
-        Player1.Position.y = spawn->Bounds.y;
+        Player.Position.x = spawn->Bounds.x;
+        Player.Position.y = spawn->Bounds.y;
 
-        Player2.Position.x = spawn->Bounds.x;
-        Player2.Position.y = spawn->Bounds.y;
+        Partner.Position.x = spawn->Bounds.x;
+        Partner.Position.y = spawn->Bounds.y;
     }
 
-    Player1.TargetActive = false;
-    Player2.TargetActive = false;
+    Player.TargetActive = false;
+    Partner.TargetActive = false;
 
     State.Exits.clear();
     for (const TileObject *exit : GetMapObjectsOfType(ExitType)) {
@@ -65,10 +65,10 @@ void Game::StartLevel()
 
     State.Chests.clear();
 
-    Player1.TargetChest = nullptr;
-    Player2.TargetChest = nullptr;
-    Player1.TargetMob = nullptr;
-    Player2.TargetMob = nullptr;
+    Player.TargetChest = nullptr;
+    Partner.TargetChest = nullptr;
+    Player.TargetMob = nullptr;
+    Partner.TargetMob = nullptr;
 
     for (const TileObject *chest : GetMapObjectsOfType(ChestType)) {
         const Property *contents = chest->GetProperty("contents");
@@ -118,101 +118,87 @@ void Game::GetPlayerInput()
     float moveUnit = 2.0f;
 
     // User1 input
-    bool player1KeyPressed = false;
-    Vector2 player1TargetPosition = Player1.Position;
+    bool playerKeyPressed = false;
+    Vector2 playerTargetPosition = Player.Position;
+
 
     if (IsKeyDown(KEY_LEFT)) {
-        player1TargetPosition.x -= moveUnit;
-        player1KeyPressed = true;
+        playerTargetPosition.x -= moveUnit;
+        playerKeyPressed = true;
     }
 
     if (IsKeyDown(KEY_RIGHT)) {
-        player1TargetPosition.x += moveUnit;
-        player1KeyPressed = true;
+        playerTargetPosition.x += moveUnit;
+        playerKeyPressed = true;
     }
 
     if (IsKeyDown(KEY_UP)) {
-        player1TargetPosition.y -= moveUnit;
-        player1KeyPressed = true;
+        playerTargetPosition.y -= moveUnit;
+        playerKeyPressed = true;
     }
 
     if (IsKeyDown(KEY_DOWN)) {
-        player1TargetPosition.y += moveUnit;
-        player1KeyPressed = true;
-    }
-
-    // User2 input
-    bool player2KeyPressed = false;
-    Vector2 player2TargetPosition = Player2.Position;
-
-    if (IsKeyDown(KEY_A)) {
-        player2TargetPosition.x -= moveUnit;
-        player2KeyPressed = true;
-    }
-
-    if (IsKeyDown(KEY_D)) {
-        player2TargetPosition.x += moveUnit;
-        player2KeyPressed = true;
-    }
-
-    if (IsKeyDown(KEY_W)) {
-        player2TargetPosition.y -= moveUnit;
-        player2KeyPressed = true;
-    }
-
-    if (IsKeyDown(KEY_S)) {
-        player2TargetPosition.y += moveUnit;
-        player2KeyPressed = true;
+        playerTargetPosition.y += moveUnit;
+        playerKeyPressed = true;
     }
 
     // check for key inputs
-    if (!Player1.Waiting && player1KeyPressed) {
-        if (PointInMap(player1TargetPosition)) {
-            Player1.TargetActive = true;
-            Player1.Target = player1TargetPosition;
+    if (!Player.Waiting && playerKeyPressed) {
+
+        if (PointInMap(playerTargetPosition)) {
+            Player.TargetActive = true;
+            Player.Target = playerTargetPosition;
+            Player.ENetClient->SendPosition(playerTargetPosition.x, playerTargetPosition.y);
         }
 
-        Player1.TargetChest = nullptr;
+        Player.TargetChest = nullptr;
         for (auto &chest : State.Chests) {
-            if (CheckCollisionPointRec(player1TargetPosition, chest.Bounds)) {
-                Player1.TargetChest = &chest;
+            if (CheckCollisionPointRec(playerTargetPosition, chest.Bounds)) {
+                Player.TargetChest = &chest;
             }
         }
 
         // if player is close to any mob
-        if (!Player1.Waiting) {
+        if (!Player.Waiting) {
             for (auto &mob : State.Mobs) {
-                if (CheckCollisionPointCircle(player1TargetPosition, mob.Position, 20)) {
-                    Player1.TargetMob = &mob;
+                if (CheckCollisionPointCircle(playerTargetPosition, mob.Position, 20)) {
+                    Player.TargetMob = &mob;
 
-                    if (Vector2Distance(Player1.Position, mob.Position) <= Player1.GetAttack().Range + 40)
-                        Player1.TargetActive = false;
+                    if (Vector2Distance(Player.Position, mob.Position) <= Player.GetAttack().Range + 40)
+                        Player.TargetActive = false;
                     break;
                 }
             }
         }
     }
 
-    if (!Player2.Waiting && player2KeyPressed) {
-        if (PointInMap(player2TargetPosition)) {
-            Player2.TargetActive = true;
-            Player2.Target = player2TargetPosition;
-        }
+    Vector2 partnerTargetPosition = Partner.Position;
 
-        Player2.TargetChest = nullptr;
-        for (auto &chest : State.Chests) {
-            if (CheckCollisionPointRec(player2TargetPosition, chest.Bounds)) {
-                Player2.TargetChest = &chest;
+    if (!Partner.Waiting) {
+        auto packet = Player.ENetClient->GetPosition(Partner.Id);
+        if (packet != nullptr) {
+            partnerTargetPosition.x = packet->x();
+            partnerTargetPosition.y = packet->y();
+            if (PointInMap(partnerTargetPosition)) {
+                Partner.TargetActive = true;
+                Partner.Target = partnerTargetPosition;
             }
         }
 
-        if (!Player2.Waiting) {
-            for (auto &mob : State.Mobs) {
-                if (CheckCollisionPointCircle(player2TargetPosition, mob.Position, 20)) {
-                    Player2.TargetMob = &mob;
+        Partner.TargetChest = nullptr;
+        for (auto &chest : State.Chests) {
+            if (CheckCollisionPointRec(partnerTargetPosition, chest.Bounds)) {
+                Partner.TargetChest = &chest;
+            }
+        }
 
-                    if (Vector2Distance(Player2.Position, mob.Position) <= Player2.GetAttack().Range + 40)
-                        Player2.TargetActive = false;
+        if (!Partner.Waiting) {
+            for (auto &mob : State.Mobs) {
+                if (CheckCollisionPointCircle(partnerTargetPosition, mob.Position, 20)) {
+                    Partner.TargetMob = &mob;
+
+                    if (Vector2Distance(Partner.Position, mob.Position) <= Partner.GetAttack().Range + 40)
+                        Partner.TargetActive = false;
                     break;
                 }
             }
@@ -220,23 +206,23 @@ void Game::GetPlayerInput()
     }
 }
 
-Player *Game::GetClosestPlayer(const Vector2 &position)
+PlayerData *Game::GetClosestPlayer(const Vector2 &position)
 {
-    auto vecToPlayer1 = Vector2Subtract(Player1.Position, position);
+    auto vecToPlayer1 = Vector2Subtract(Player.Position, position);
     auto distance1 = Vector2Length(vecToPlayer1);
 
-    auto vecToPlayer2 = Vector2Subtract(Player2.Position, position);
+    auto vecToPlayer2 = Vector2Subtract(Partner.Position, position);
     float distance2 = Vector2Length(vecToPlayer2);
 
     if (distance1 < distance2)
-        return &Player1;
+        return &Player;
 
-    return &Player2;
+    return &Partner;
 }
 
 void Game::UpdateMobs()
 {
-    Positions positions{Player1.Position, Player2.Position};
+    Positions positions{Player.Position, Partner.Position};
     State.CullDeadMobs(positions);
 
     // check for mob actions
@@ -309,8 +295,8 @@ void Game::UpdateMobs()
 
 void Game::UpdateSprites()
 {
-    Player1.UpdateSprite();
-    Player2.UpdateSprite();
+    Player.UpdateSprite();
+    Partner.UpdateSprite();
     State.UpdateMobSprites();
 }
 
@@ -328,7 +314,7 @@ void Game::UpdateGame()
         }
     }
 
-    if (!IsWindowFocused()) {
+    if (!DisableFocus && !IsWindowFocused()) {
         PauseGame();
         return;
     }
@@ -338,11 +324,11 @@ void Game::UpdateGame()
 
     GetPlayerInput();
 
-    auto destination1 = Player1.Move();
+    auto destination1 = Player.Move();
     if (destination1.has_value()) {
-        if (Player1.Waiting && Player2.Waiting) {
+        if (Player.Waiting && Partner.Waiting) {
             if (destination1.value() == "endgame") {
-                EndGame(true, Player1.Gold + 100);
+                EndGame(true, Player.Gold + 100);
             }
             else {
                 std::string map = "maps/" + destination1.value();
@@ -352,11 +338,11 @@ void Game::UpdateGame()
         }
     }
 
-    auto destination2 = Player2.Move();
+    auto destination2 = Partner.Move();
     if (destination2.has_value()) {
-        if (Player1.Waiting && Player2.Waiting) {
+        if (Player.Waiting && Partner.Waiting) {
             if (destination2.value() == "endgame") {
-                EndGame(true, Player1.Gold + 100);
+                EndGame(true, Player.Gold + 100);
             }
             else {
                 std::string map = "maps/" + destination2.value();
@@ -366,19 +352,19 @@ void Game::UpdateGame()
         }
     }
 
-    Positions positions{Player1.Position, Player2.Position};
-    Player1.ApplyActions(positions);
-    Player2.ApplyActions(positions);
+    Positions positions{Player.Position, Partner.Position};
+    Player.ApplyActions(positions);
+    Partner.ApplyActions(positions);
 
     UpdateMobs();
 
-    if (Player1.Health < 0 || Player2.Health < 0) {
+    if (Player.Health < 0 || Partner.Health < 0) {
         // you died, change to the end screen
-        EndGame(false, Player1.Gold + Player2.Gold);
+        EndGame(false, Player.Gold + Partner.Gold);
     }
 
     UpdateSprites();
 
-    SetVisiblePoint(Player1.Position);
-    SetVisiblePoint(Player2.Position);
+    SetVisiblePoint(Player.Position);
+    SetVisiblePoint(Partner.Position);
 }

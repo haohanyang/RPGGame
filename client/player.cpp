@@ -11,13 +11,17 @@
 #include "raylib.h"
 #include "raymath.h"
 
-Player::Player(uint8_t id, std::string name, GameState &state)
-    : State(state), Name(name), Id(id)
+PlayerData::PlayerData(uint8_t id, GameState &state)
+    : State(state), Name("Player" + std::to_string(id)), Id(id)
 {
 
 }
 
-const AttackInfo &Player::GetAttack() const
+PlayerData::~PlayerData()
+{
+   
+};
+const AttackInfo &PlayerData::GetAttack() const
 {
     if (EquipedWeapon == -1)
         return DefaultAttack;
@@ -25,7 +29,7 @@ const AttackInfo &Player::GetAttack() const
     return GetItem(EquipedWeapon)->Attack;
 }
 
-const int Player::GetDefense() const
+const int PlayerData::GetDefense() const
 {
     if (EquipedArmor == -1)
         return 0 + BuffDefense;
@@ -33,7 +37,7 @@ const int Player::GetDefense() const
     return GetItem(EquipedArmor)->Defense.Defense + BuffDefense;
 }
 
-TreasureInstance Player::RemoveInventoryItem(int slot, int quantity)
+TreasureInstance PlayerData::RemoveInventoryItem(int slot, int quantity)
 {
     TreasureInstance treasure = {-1, 0};
 
@@ -62,7 +66,7 @@ TreasureInstance Player::RemoveInventoryItem(int slot, int quantity)
     return treasure;
 }
 
-bool Player::PickupItem(TreasureInstance &drop)
+bool PlayerData::PickupItem(TreasureInstance &drop)
 {
     // special case for bag of gold, because it's not a real item
     if (drop.ItemId == GoldBagItem) {
@@ -118,7 +122,7 @@ bool Player::PickupItem(TreasureInstance &drop)
 }
 
 // return non empty to load new map
-std::optional<std::string> Player::Move()
+std::optional<std::string> PlayerData::Move()
 {
     // does the player want to move
     if (TargetActive) {
@@ -157,7 +161,7 @@ std::optional<std::string> Player::Move()
     return {};
 }
 
-void Player::ApplyActions(Positions &positions)
+void PlayerData::ApplyActions(Positions &positions)
 {
     // see if we want to attack any mobs
     if (TargetMob != nullptr) {
@@ -251,7 +255,7 @@ void Player::ApplyActions(Positions &positions)
     }
 }
 
-void Player::UpdateSprite()
+void PlayerData::UpdateSprite()
 {
 
     if (Sprite != nullptr)
@@ -267,7 +271,7 @@ void Player::UpdateSprite()
         Sprite->SpriteFrame = PlayerSprite;
 }
 
-MobInstance *Player::GetNearestMobInSight(std::vector<MobInstance> &mobs)
+MobInstance *PlayerData::GetNearestMobInSight(std::vector<MobInstance> &mobs)
 {
     MobInstance *nearest = nullptr;
     float nearestDistance = 9999999.9f;
@@ -287,7 +291,7 @@ MobInstance *Player::GetNearestMobInSight(std::vector<MobInstance> &mobs)
     return nearest;
 }
 
-void Player::UseConsumable(Item *item)
+void PlayerData::UseConsumable(Item *item)
 {
     if (item == nullptr || !item->IsActivatable())
         return;
@@ -325,7 +329,7 @@ void Player::UseConsumable(Item *item)
     }
 }
 
-void Player::ActivateItem(Positions &positions, int slotIndex)
+void PlayerData::ActivateItem(Positions &positions, int slotIndex)
 {
     if (slotIndex < 0 || slotIndex >= BackpackContents.size())
         return;
@@ -382,7 +386,7 @@ void Player::ActivateItem(Positions &positions, int slotIndex)
     }
 }
 
-void Player::DropItem(Positions &positions, int item)
+void PlayerData::DropItem(Positions &positions, int item)
 {
     TreasureInstance drop = RemoveInventoryItem(item, 999);
     State.PlaceItemDrop(positions, drop, Position);

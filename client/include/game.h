@@ -31,11 +31,13 @@
 #include "game.h"
 #include "game_hud.h"
 
+constexpr bool DisableFocus = true;
 
-class Game {
+class Game
+{
 public:
-    Player Player1;
-    Player Player2;
+    PlayerData Player;
+    PlayerData Partner;
     GameState State;
     GameHudScreen GameHud;
 
@@ -51,7 +53,7 @@ public:
     void GetPlayerInput();
 
     void UpdateMobs();
-    Player* GetClosestPlayer(const Vector2 &position);
+    PlayerData *GetClosestPlayer(const Vector2 &position);
 
     void UpdateSprites();
 };

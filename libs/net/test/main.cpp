@@ -3,18 +3,20 @@
 #include <string>
 #include <thread>
 #include <chrono>
+
 constexpr uint32_t port = 8000;
 
-
-void Server() {
-    net::ENetServer server;
-    server.Start(port);
-    server.Poll();
+void Server()
+{
+    auto server = net::ENetServer::Create();
+    server->Start(port);
+    server->Poll();
 }
 
-void ClientInput() {
-    net::ENetClient client;
-    if (client.Connect("localhost", port) != 0) {
+void ClientInput(uint8_t playerId)
+{
+    auto client = net::ENetClient::Create(playerId);
+    if (client->Connect("localhost", port) != 0) {
         return;
     }
 
@@ -30,25 +32,25 @@ void ClientInput() {
         std::cin >> x;
         std::cout << "y:>";
         std::cin >> y;
-        client.SendPos(message, x, y);
+        client->SendPosition(x, y);
     }
 }
 
-void ClientSendPos(const std::string &message, float x, float y) {
-    net::ENetClient client;
-    if (client.Connect("localhost", port) != 0) {
+void ClientSendPos(uint8_t playerId, float x, float y)
+{
+    auto client = net::ENetClient::Create(playerId);
+    if (client->Connect("localhost", port) != 0) {
         return;
     }
-    client.SendPos(message, x, y);
+    client->SendPosition(x, y);
 }
 
-
-int main() {
+int main()
+{
     spdlog::set_level(spdlog::level::debug);
     std::thread server_thread(Server);
-    std::thread client_thread1(ClientSendPos,"ms1", 1.0f, 1.0f);
-    std::thread client_thread2(ClientSendPos,"ms2", 1.0f, 1.0f);
-    std::thread client_thread3(ClientSendPos,"ms3", 1.0f, 1.0f);
+    std::thread client_thread1(ClientSendPos, 1, 1.0f, 1.0f);
+    std::thread client_thread2(ClientSendPos, 2, 2.0f, 2.0f);
 
     server_thread.join();
     return 0;

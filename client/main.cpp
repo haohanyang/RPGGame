@@ -36,145 +36,132 @@
 // all the states the program can be in 
 enum class ApplicationStates
 {
-	Startup,
-	Loading,
-	Menu,
-	Running,
-	Paused,
-	GameOver,
-	Quitting
+    Startup,
+    Loading,
+    Menu,
+    Running,
+    Paused,
+    GameOver,
+    Quitting
 };
-ApplicationStates ApplicationState = ApplicationStates::Startup;
-Game Game;
 
+ApplicationStates ApplicationState = ApplicationStates::Startup;
+
+Game Game;
 
 // the main menu screen
 // based on the screen class
-class MainMenuScreen : public Screen
+class MainMenuScreen: public Screen
 {
 public:
-	void Draw() override
-	{
-		// dim the background
-		DimSceen();
+    void Draw() override
+    {
+        // dim the background
+        DimSceen();
 
-		// title
-		DrawCenteredText(40, "Raylib RPG Example", 40, BLUE);
+        // title
+        DrawCenteredText(40, "Raylib RPG Example", 40, BLUE);
 
-		// version and copyright
-		DrawText(VersionString, 2, GetScreenHeight() - 10, 10, GRAY);
-		DrawText(CopyrightString, GetScreenWidth() - 2 - MeasureText(CopyrightString, 10), GetScreenHeight() - 10, 10, GRAY);
+        // version and copyright
+        DrawText(VersionString, 2, GetScreenHeight() - 10, 10, GRAY);
+        DrawText(CopyrightString,
+                 GetScreenWidth() - 2 - MeasureText(CopyrightString, 10),
+                 GetScreenHeight() - 10,
+                 10,
+                 GRAY);
 
-		// play button
-		if (CenteredButton(GetScreenHeight() / 4, "Play"))
-			StartGame();
-		
-		// options button
-		CenteredButton(GetScreenHeight()/2, "Options");
+        // play button
+        if (CenteredButton(GetScreenHeight() / 4, "Play"))
+            StartGame();
 
-		// quit button
-		if (CenteredButton(GetScreenHeight() - (GetScreenHeight() / 4), "Quit"))
-			QuitApplication();
-	}
+        // options button
+        CenteredButton(GetScreenHeight() / 2, "Options");
+
+        // quit button
+        if (CenteredButton(GetScreenHeight() - (GetScreenHeight() / 4), "Quit"))
+            QuitApplication();
+    }
 };
 
 MainMenuScreen MainMenu;
 
 // the game over screen
 // shows the win state and final score
-class GameOverScreen : public Screen
+class GameOverScreen: public Screen
 {
 public:
-	void Draw() override
-	{
-		// dim the background
-		DimSceen();
+    void Draw() override
+    {
+        // dim the background
+        DimSceen();
 
-		// title
-		DrawCenteredText(40, "Raylib RPG Example", 40, BLUE);
+        // title
+        DrawCenteredText(40, "Raylib RPG Example", 40, BLUE);
 
 
-		// win state
-		if (IsWin)
-			DrawCenteredText(120, "Congratulations You WON!", 60, WHITE);
-		else
-			DrawCenteredText(120, "You died, better luck next time.", 60, RED);
+        // win state
+        if (IsWin)
+            DrawCenteredText(120, "Congratulations You WON!", 60, WHITE);
+        else
+            DrawCenteredText(120, "You died, better luck next time.", 60, RED);
 
-		// score
-		DrawCenteredText(200, TextFormat("Score = %d", Gold), 60, YELLOW);
+        // score
+        DrawCenteredText(200, TextFormat("Score = %d", Gold), 60, YELLOW);
 
-		// version and copyright
-		DrawText(VersionString, 2, GetScreenHeight() - 10, 10, GRAY);
-		DrawText(CopyrightString, GetScreenWidth() - 2 - MeasureText(CopyrightString, 10), GetScreenHeight() - 10, 10, GRAY);
+        // version and copyright
+        DrawText(VersionString, 2, GetScreenHeight() - 10, 10, GRAY);
+        DrawText(CopyrightString,
+                 GetScreenWidth() - 2 - MeasureText(CopyrightString, 10),
+                 GetScreenHeight() - 10,
+                 10,
+                 GRAY);
 
-		// main menu button
-		if (CenteredButton(GetScreenHeight() / 2, "Main Menu"))
-			GoToMainMenu();
+        // main menu button
+        if (CenteredButton(GetScreenHeight() / 2, "Main Menu"))
+            GoToMainMenu();
 
-		// quit button
-		if (CenteredButton(GetScreenHeight() - (GetScreenHeight() / 4), "Quit"))
-			QuitApplication();
-	}
+        // quit button
+        if (CenteredButton(GetScreenHeight() - (GetScreenHeight() / 4), "Quit"))
+            QuitApplication();
+    }
 
-	bool IsWin = false;
-	int Gold = 0;
+    bool IsWin = false;
+    int Gold = 0;
 };
+
 GameOverScreen GameOver;
 
 // setup the window and icon
 void SetupWindow()
 {
-	// Validate that the window is not taller than the monitor size, if so, set it to a smaller size
-	int monitor = GetCurrentMonitor();
+    // Validate that the window is not taller than the monitor size, if so, set it to a smaller size
+    int monitor = GetCurrentMonitor();
 
-	int maxHeight = GetMonitorHeight(monitor) - 40;
-	if (GetScreenHeight() > maxHeight)
-		SetWindowSize(GetScreenWidth(), maxHeight);
+    int maxHeight = GetMonitorHeight(monitor) - 40;
+    if (GetScreenHeight() > maxHeight)
+        SetWindowSize(GetScreenWidth(), maxHeight);
 
-	SetExitKey(0);
-	SetTargetFPS(144);
+    SetExitKey(0);
+    SetTargetFPS(144);
 
-	// load an image for the window icon
-	Image icon = LoadImage("icons/Icon.6_98.png");
+    // load an image for the window icon
+    Image icon = LoadImage("icons/Icon.6_98.png");
 
-	// ensure that the picture is in the correct format
-	ImageFormat(&icon, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    // ensure that the picture is in the correct format
+    ImageFormat(&icon, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
-	// replace the background and border colors with transparent
-	ImageColorReplace(&icon, BLACK, BLANK);
-	ImageColorReplace(&icon, Color{ 136,136,136,255 }, BLANK);
+    // replace the background and border colors with transparent
+    ImageColorReplace(&icon, BLACK, BLANK);
+    ImageColorReplace(&icon, Color{136, 136, 136, 255}, BLANK);
 
-	// set the icon
-	SetWindowIcon(icon);
+    // set the icon
+    SetWindowIcon(icon);
 
-	// free the image data
-	UnloadImage(icon);
+    // free the image data
+    UnloadImage(icon);
 }
 
 // called by the loading system when all assets are loaded
-void LoadComplete(MainMenuScreen *m)
-{
-	ApplicationState = ApplicationStates::Menu;
-	SetActiveScreen(m);
-
-	// load background world so we have something to look at behind the menu
-	LoadMap("maps/menu_map.tmx");
-}
-
-// called when the game wants to go back to the main menu, from pause or game over screens
-void GoToMainMenu()
-{
-	// quit our game, if our game was running
-	if (ApplicationState == ApplicationStates::Running || ApplicationState == ApplicationStates::Paused)
-		Game.QuitGame();
-
-	// start our background music again
-	StartBGM("sounds/Flowing Rocks.ogg");
-
-	// go back to the main menu like we did when we started up
-	LoadComplete();
-}
-
 void LoadComplete()
 {
     ApplicationState = ApplicationStates::Menu;
@@ -184,156 +171,178 @@ void LoadComplete()
     LoadMap("maps/menu_map.tmx");
 }
 
+// called when the game wants to go back to the main menu, from pause or game over screens
+void GoToMainMenu()
+{
+    // quit our game, if our game was running
+    if (ApplicationState == ApplicationStates::Running || ApplicationState == ApplicationStates::Paused)
+        Game.QuitGame();
+
+    // start our background music again
+    StartBGM("sounds/Flowing Rocks.ogg");
+
+    // go back to the main menu like we did when we started up
+    LoadComplete();
+}
 
 // called by the main menu to check for exit
 void UpdateMainMenu()
 {
-	if (IsKeyPressed(KEY_ESCAPE))
-		QuitApplication();
+    if (IsKeyPressed(KEY_ESCAPE))
+        QuitApplication();
 }
 
 // starts a new game
 void StartGame()
 {
-	ApplicationState = ApplicationStates::Running;
-	SetActiveScreen(nullptr);
-	StopBGM();
-	Game.InitGame();
+    ApplicationState = ApplicationStates::Running;
+    SetActiveScreen(nullptr);
+    StopBGM();
+    Game.InitGame();
 }
 
 // called when the menu wants to pause the game
 void PauseGame()
 {
-	ApplicationState = ApplicationStates::Paused;
+    ApplicationState = ApplicationStates::Paused;
 }
 
 // called when the menu wants to resume the game
 void ResumeGame()
 {
-	ApplicationState = ApplicationStates::Running;
-	SetActiveScreen(nullptr);
-	Game.ActivateGame();
+    ApplicationState = ApplicationStates::Running;
+    SetActiveScreen(nullptr);
+    Game.ActivateGame();
 }
 
 // called by the game when it is over, by win or loss
 void EndGame(bool win, int gold)
 {
-	ApplicationState = ApplicationStates::GameOver;
-	SetActiveScreen(&GameOver);
-	GameOver.IsWin = win;
-	GameOver.Gold = gold;
+    ApplicationState = ApplicationStates::GameOver;
+    SetActiveScreen(&GameOver);
+    GameOver.IsWin = win;
+    GameOver.Gold = gold;
 }
 
 // quit the entire application
 void QuitApplication()
 {
-	ApplicationState = ApplicationStates::Quitting;
+    ApplicationState = ApplicationStates::Quitting;
 }
 
-bool SearchAndSetResourceDir(const char* folderName)
+bool SearchAndSetResourceDir(const char *folderName)
 {
-	// check the working dir
-	if (DirectoryExists(folderName))
-	{
-		ChangeDirectory(TextFormat("%s/%s", GetWorkingDirectory(), folderName));
-		return true;
-	}
+    // check the working dir
+    if (DirectoryExists(folderName)) {
+        ChangeDirectory(TextFormat("%s/%s", GetWorkingDirectory(), folderName));
+        return true;
+    }
 
-	const char* appDir = GetApplicationDirectory();
+    const char *appDir = GetApplicationDirectory();
 
-	// check the applicationDir
-	const char* dir = TextFormat("%s%s", appDir, folderName);
-	if (DirectoryExists(dir))
-	{
-		ChangeDirectory(dir);
-		return true;
-	}
+    // check the applicationDir
+    const char *dir = TextFormat("%s%s", appDir, folderName);
+    if (DirectoryExists(dir)) {
+        ChangeDirectory(dir);
+        return true;
+    }
 
-	// check one up from the app dir
-	dir = TextFormat("%s../%s", appDir, folderName);
-	if (DirectoryExists(dir))
-	{
-		ChangeDirectory(dir);
-		return true;
-	}
+    // check one up from the app dir
+    dir = TextFormat("%s../%s", appDir, folderName);
+    if (DirectoryExists(dir)) {
+        ChangeDirectory(dir);
+        return true;
+    }
 
-	// check two up from the app dir
-	dir = TextFormat("%s../../%s", appDir, folderName);
-	if (DirectoryExists(dir))
-	{
-		ChangeDirectory(dir);
-		return true;
-	}
+    // check two up from the app dir
+    dir = TextFormat("%s../../%s", appDir, folderName);
+    if (DirectoryExists(dir)) {
+        ChangeDirectory(dir);
+        return true;
+    }
 
-	// check three up from the app dir
-	dir = TextFormat("%s../../../%s", appDir, folderName);
-	if (DirectoryExists(dir))
-	{
-		ChangeDirectory(dir);
-		return true;
-	}
+    // check three up from the app dir
+    dir = TextFormat("%s../../../%s", appDir, folderName);
+    if (DirectoryExists(dir)) {
+        ChangeDirectory(dir);
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 // the main application loop
-int main()
+int main(int argc, char *argv[])
 {
 
+    // setup user info
+    if (argc == 2) {
+        int id = std::stoi(argv[1]);
+        Game.Player.Id = id;
+        Game.Player.Name = "Player" + std::to_string(id);
+        Game.Player.ENetClient = net::ENetClient::Create(id);
 
-	// setup the window
-	SetConfigFlags(FLAG_VSYNC_HINT);
-	InitWindow(1280,700,"RPG Example");
-	SetupWindow();
+        Game.Partner.Id = 3 - id;
+        Game.Partner.Name = "Player" + std::to_string(3 - id);
 
-	SearchAndSetResourceDir("_resources");
-	InitAudio();
-	InitResources();
+        if (Game.Player.ENetClient->Connect("localhost", 8000) != 0) {
+            TraceLog(LOG_ERROR, "Fail to connect");
+            return EXIT_FAILURE;
+        }
+    }
+    else {
+        TraceLog(LOG_ERROR, "Invalid arguments");
+        return EXIT_FAILURE;
+    }
 
-	ApplicationState = ApplicationStates::Loading;
+
+    // setup the window
+    SetConfigFlags(FLAG_VSYNC_HINT);
+    InitWindow(1280, 700, "RPG Example");
+    SetupWindow();
+
+    SearchAndSetResourceDir("_resources");
+    InitAudio();
+    InitResources();
+
+    ApplicationState = ApplicationStates::Loading;
 
 
 
-	// game loop
-	while (!WindowShouldClose() && ApplicationState != ApplicationStates::Quitting)
-	{
-		// call the update that goes with our current game state
-		switch (ApplicationState)
-		{
-		case ApplicationStates::Loading:
-			UpdateLoad();
-			break;
+    // game loop
+    while (!WindowShouldClose() && ApplicationState != ApplicationStates::Quitting) {
+        // call the update that goes with our current game state
+        switch (ApplicationState) {
+            case ApplicationStates::Loading: UpdateLoad();
+                break;
 
-		case ApplicationStates::Menu:
-			UpdateMainMenu();
-			break;
+            case ApplicationStates::Menu: UpdateMainMenu();
+                break;
 
-		case ApplicationStates::Running:
-			Game.UpdateGame();
-			break;
+            case ApplicationStates::Running: Game.UpdateGame();
+                break;
 
-		case ApplicationStates::Paused: 
-			UpdatePaused();
-			break;
-		}
+            case ApplicationStates::Paused: UpdatePaused();
+                break;
+        }
 
-		// update the screen for this frame
-		BeginDrawing();
-		ClearBackground(BLACK);
+        // update the screen for this frame
+        BeginDrawing();
+        ClearBackground(BLACK);
 
-		// the map is always first because it is always under the menu
-		DrawMap();
+        // the map is always first because it is always under the menu
+        DrawMap();
 
-		// draw whatever menu or hud screen we have
-		DrawScreen();
+        // draw whatever menu or hud screen we have
+        DrawScreen();
 
-		UpdateAudio();
-		EndDrawing();
-	}
+        UpdateAudio();
+        EndDrawing();
+    }
 
-	ShutdownAudio();
-	CleanupResources();
-	CloseWindow();
+    ShutdownAudio();
+    CleanupResources();
+    CloseWindow();
 
-	return 0;
+    return 0;
 }

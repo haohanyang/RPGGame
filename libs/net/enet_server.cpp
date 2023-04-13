@@ -10,7 +10,7 @@ std::shared_ptr<ENetServer> ENetServer::Create()
 }
 
 ENetServer::ENetServer()
-    : Server(nullptr)
+    : Server(nullptr), Clients({nullptr, nullptr})
 {
     if (enet_initialize() != 0) {
         spdlog::error("An error occurred while initializing ENet");
@@ -50,27 +50,35 @@ void ENetServer::Poll()
         auto res = enet_host_service(Server, &event, net::SERVER_TIMEOUT);
         if (res > 0) {
             if (event.type == ENET_EVENT_TYPE_CONNECT) {
-                spdlog::debug("(Server) A new client connected from {}:{}",
+                spdlog::debug("Player {} connected from {}:{}, peer id {}, peer data {}",
+                              event.data,
                               event.peer->address.host,
-                              event.peer->address.port);
-                Clients[event.peer->incomingPeerID] = event.peer;
-
+                              event.peer->address.port, event.peer->incomingPeerID, event.peer->data);
+                int playerId = event.data;
+                Clients[playerId - 1] = event.peer;
             }
             else if (event.type == ENET_EVENT_TYPE_RECEIVE) {
-                // de-serialize
-                auto *pos = GetPos(event.packet->data);
-                spdlog::debug("(Server) A packet of length {} containing {} was received from {} on channel {}",
-                              event.packet->dataLength,
-                              pos->message()->str(),
-                              event.peer->incomingPeerID,
-                              event.channelID);
+                spdlog::debug("Receive message from {}:{}, peer id {}",
+                              event.peer->address.host, event.peer->address.port, event.peer->incomingPeerID);
+                auto const *message = GetMessage(event.packet->data);
+                auto playerId = message->player_id();
+
+                if (message->content_type() == Content_Position) {
+                    if (Clients[2 - playerId] != nullptr && Clients[2 - playerId]->state == ENET_PEER_STATE_CONNECTED) {
+                        enet_peer_send(Clients[2 - playerId], RELIABLE_CHANNEL, event.packet);
+                    }
+                    else {
+                        spdlog::error("Failed to forward the message to player {}", 3 - playerId);
+                    }
+                }
+
                 // enet_host_broadcast(Server, 0, event.packet);
                 // enet_packet_destroy(event.packet);
-
             }
             else if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
-                spdlog::debug("(Server) Client {} disconnected.\n", event.peer->incomingPeerID);
-                Clients.erase(event.peer->incomingPeerID);
+                auto playerId = event.data;
+                spdlog::debug("Player {} disconnected", playerId);
+                Clients[playerId - 1] = nullptr;
             }
         }
         else if (res < 0) {
@@ -91,9 +99,10 @@ void ENetServer::Shutdown()
     }
 
     for (auto it : Clients) {
-        auto *client = it.second;
-        spdlog::debug("Disconnecting from client {}", client->incomingPeerID);
-        enet_peer_disconnect(client, 0);
+        if (it != nullptr) {
+            spdlog::debug("Disconnecting from player {}", it->incomingPeerID);
+            enet_peer_disconnect(it, 0);
+        }
     }
 
     auto start = std::chrono::steady_clock::now();
@@ -109,7 +118,7 @@ void ENetServer::Shutdown()
                 enet_packet_destroy(event.packet);
             }
             else if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
-                Clients.erase(event.peer->incomingPeerID);
+                Clients[event.peer->incomingPeerID] = nullptr;
                 spdlog::debug("Disconnection of client {} is successful, {} clients remaining",
                               event.peer->incomingPeerID,
                               Clients.size());
@@ -145,13 +154,13 @@ void ENetServer::Shutdown()
 
     // force disconnect the remaining clients
     for (auto it : Clients) {
-        auto id = it.first;
-        auto client = it.second;
-        spdlog::debug("Forcibly disconnecting client {}", id);
-        enet_peer_reset(client);
+        if (it != nullptr) {
+            spdlog::debug("Forcibly disconnecting player {}", it->incomingPeerID);
+            enet_peer_reset(it);
+        }
     }
 
-    Clients = std::unordered_map<uint32_t, ENetPeer *>();
+    Clients = {nullptr, nullptr};
     // destroy the host
     enet_host_destroy(Server);
     Server = nullptr;

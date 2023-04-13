@@ -1,7 +1,15 @@
-table Pos {
-  message:string;
+namespace Serialize;
+
+union Content { Position }
+
+table Message {
+    player_id:ubyte;
+    content:Content;
+}
+
+struct Position {
   x:float;
   y:float;
 }
 
-root_type Pos;
+root_type Message;

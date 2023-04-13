@@ -29,7 +29,7 @@
 
 #include "raylib.h"
 
-GameHudScreen::GameHudScreen(Player &player1, Player &player2)
+GameHudScreen::GameHudScreen(PlayerData &player1, PlayerData &player2)
     : Screen(), Player1(player1), Player2(player2)
 {
 }
@@ -43,7 +43,7 @@ void GameHudScreen::ShowItemToolTip(const Item *item, const Rectangle &rect)
     DrawText(item->Name.c_str(), int(rect.x), int(rect.y), 10, WHITE);
 }
 
-void GameHudScreen::DrawInventory(Player &player)
+void GameHudScreen::DrawInventory(PlayerData &player)
 {
     Rectangle inventoryWindowRect = {GetScreenWidth() - 475.0f, GetScreenHeight() - 500.0f, 354, 400.0f};
     Rectangle shadowRect = inventoryWindowRect;
@@ -163,7 +163,7 @@ void GameHudScreen::Draw()
     Draw(Player2, GetScreenHeight() - 80.0f); // lower
 }
 
-void GameHudScreen::Draw(Player &player, float barHeight)
+void GameHudScreen::Draw(PlayerData &player, float barHeight)
 {
     // background
     DrawRectangleRec(Rectangle{0, barHeight, float(GetScreenWidth()), 80}, ColorAlpha(DARKGRAY, 0.25f));

@@ -8,6 +8,8 @@
 #include "extra.h"
 #include "treasure.h"
 
+#include "net.h"
+
 #include <string>
 
 struct InventoryContents
@@ -20,11 +22,13 @@ constexpr int MaxHealth = 100;
 
 constexpr float PickupDistance = 20;
 
-class Player
+class PlayerData
 {
 public:
     std::string Name;
     uint8_t Id;
+
+    std::shared_ptr<net::ENetClient> ENetClient;
 
     Vector2 Position = {0, 0};
     SpriteInstance *Sprite = nullptr;
@@ -58,7 +62,8 @@ public:
     Chest *TargetChest = nullptr;
     MobInstance *TargetMob = nullptr;
 
-    Player(uint8_t id, std::string name, GameState &state);
+    PlayerData(uint8_t id, GameState &state);
+    ~PlayerData();
     const AttackInfo &GetAttack() const;
     const int GetDefense() const;
     TreasureInstance RemoveInventoryItem(int slot, int quantity);
