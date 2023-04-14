@@ -140,14 +140,14 @@ void GameHudScreen::DrawInventory(Player &player)
 
                         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                             if (item->IsActivatable())
-                                player.ActivateItem(positions, itemIndex);
+                                player.ActivateItem(itemIndex);
                             else if (item->IsWeapon())
-                                player.ActivateItem(positions, itemIndex);
+                                player.ActivateItem(itemIndex);
                             else if (item->IsArmor())
-                                player.ActivateItem(positions, itemIndex);
+                                player.ActivateItem(itemIndex);
                         }
                         else if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
-                            player.DropItem(positions, itemIndex);
+                            player.DropItem(itemIndex);
                         }
                     }
                 }
@@ -238,7 +238,7 @@ void GameHudScreen::Draw(Player &player, float barHeight)
     Positions positions{Player1.Position, Player2.Position};
 
     if (activatedItem != -1) {
-        player.ActivateItem(positions, activatedItem);
+        player.ActivateItem(activatedItem);
     }
 
 

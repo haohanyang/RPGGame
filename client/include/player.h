@@ -2,7 +2,6 @@
 
 #include "raylib.h"
 
-#include "game_state.h"
 #include "map.h"
 #include "combat.h"
 #include "extra.h"
@@ -38,8 +37,6 @@ public:
 
     float Speed = 100;
 
-    GameState &State;
-
     float LastAttack = 0;
     float LastConsumeable = 0;
     float AttackCooldown = 0;
@@ -58,19 +55,15 @@ public:
     Chest *TargetChest = nullptr;
     MobInstance *TargetMob = nullptr;
 
-    Player(uint8_t id, std::string name, GameState &state);
+    Player(uint8_t id, std::string name);
     const AttackInfo &GetAttack() const;
     const int GetDefense() const;
     TreasureInstance RemoveInventoryItem(int slot, int quantity);
     bool PickupItem(TreasureInstance &drop);
-    void UseConsumable(Item *item);
-    void ActivateItem(Positions &positions, int slotIndex);
-    void DropItem(Positions &positions, int item);
-    std::optional<std::string> Move();
-    void ApplyActions(Positions &positions);
     void UpdateSprite();
 
-    MobInstance *GetNearestMobInSight(std::vector<MobInstance> &mobs);
+    std::function<void(int)> ActivateItem;
+    std::function<void(int)> DropItem;
 
 private:
     AttackInfo DefaultAttack = {"Slap", true, 1, 1, 1.0f, 10.0f};

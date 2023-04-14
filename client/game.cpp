@@ -9,10 +9,24 @@
 #include "raylib.h"
 #include "raymath.h"
 
-Game::Game()
-    : State(), Player1(1, "Player1", State), Player2(2, "Player2", State), GameHud(Player1, Player2)
-{
 
+Game::Game()
+    : Player1(1, "Player1"), Player2(2, "Player2"), GameHud(Player1, Player2)
+{
+    Player1.ActivateItem = [this](int item)
+    { ActivateItem(Player1, item); };
+    Player1.DropItem = [this](int item)
+    { DropItem(Player1, item); };
+
+    Player2.ActivateItem = [this](int item)
+    { ActivateItem(Player2, item); };
+    Player2.DropItem = [this](int item)
+    { DropItem(Player2, item); };
+}
+
+float Game::GetGameTime()
+{
+    return (float) GameClock;
 }
 
 void Game::LoadLevel(const char *level)
@@ -29,7 +43,7 @@ void Game::LoadLevel(const char *level)
 
 void Game::StartLevel()
 {
-    State.GameClock = 0;
+    GameClock = 0;
 
     Player1.LastConsumeable = -100;
     Player1.LastAttack = -100;
@@ -52,18 +66,18 @@ void Game::StartLevel()
     Player1.TargetActive = false;
     Player2.TargetActive = false;
 
-    State.Exits.clear();
+    Exits.clear();
     for (const TileObject *exit : GetMapObjectsOfType(ExitType)) {
         const Property *level = exit->GetProperty("target_level");
         if (level != nullptr) {
             if (level->Value == "-1")
-                State.Exits.emplace_back(Exit{exit->Bounds, "endgame"});
+                Exits.emplace_back(Exit{exit->Bounds, "endgame"});
             else
-                State.Exits.emplace_back(Exit{exit->Bounds, "level" + level->Value + ".tmx"});
+                Exits.emplace_back(Exit{exit->Bounds, "level" + level->Value + ".tmx"});
         }
     }
 
-    State.Chests.clear();
+    Chests.clear();
 
     Player1.TargetChest = nullptr;
     Player2.TargetChest = nullptr;
@@ -73,10 +87,10 @@ void Game::StartLevel()
     for (const TileObject *chest : GetMapObjectsOfType(ChestType)) {
         const Property *contents = chest->GetProperty("contents");
         if (contents != nullptr)
-            State.Chests.emplace_back(Chest{chest->Bounds, contents->Value});
+            Chests.emplace_back(Chest{chest->Bounds, contents->Value});
     }
 
-    State.ItemDrops.clear();
+    ItemDrops.clear();
 
     for (const TileObject *mobSpawn : GetMapObjectsOfType(MobSpawnType)) {
         const Property *mobType = mobSpawn->GetProperty("mob_type");
@@ -90,7 +104,7 @@ void Game::StartLevel()
         sprite->Bobble = true;
         sprite->Shadow = true;
 
-        State.Mobs.push_back(MobInstance{monster->Id, pos, monster->Health, sprite->Id});
+        Mobs.push_back(MobInstance{monster->Id, pos, monster->Health, sprite->Id});
     }
 }
 
@@ -173,7 +187,7 @@ void Game::GetPlayerInput()
         }
 
         Player1.TargetChest = nullptr;
-        for (auto &chest : State.Chests) {
+        for (auto &chest : Chests) {
             if (CheckCollisionPointRec(player1TargetPosition, chest.Bounds)) {
                 Player1.TargetChest = &chest;
             }
@@ -181,7 +195,7 @@ void Game::GetPlayerInput()
 
         // if player is close to any mob
         if (!Player1.Waiting) {
-            for (auto &mob : State.Mobs) {
+            for (auto &mob : Mobs) {
                 if (CheckCollisionPointCircle(player1TargetPosition, mob.Position, 20)) {
                     Player1.TargetMob = &mob;
 
@@ -200,14 +214,14 @@ void Game::GetPlayerInput()
         }
 
         Player2.TargetChest = nullptr;
-        for (auto &chest : State.Chests) {
+        for (auto &chest : Chests) {
             if (CheckCollisionPointRec(player2TargetPosition, chest.Bounds)) {
                 Player2.TargetChest = &chest;
             }
         }
 
         if (!Player2.Waiting) {
-            for (auto &mob : State.Mobs) {
+            for (auto &mob : Mobs) {
                 if (CheckCollisionPointCircle(player2TargetPosition, mob.Position, 20)) {
                     Player2.TargetMob = &mob;
 
@@ -234,13 +248,40 @@ Player *Game::GetClosestPlayer(const Vector2 &position)
     return &Player2;
 }
 
+void Game::CullDeadMobs()
+{
+    for (auto mobItr = Mobs.begin(); mobItr != Mobs.end();) {
+        MOB *monsterInfo = GetMob(mobItr->MobId);
+        if (monsterInfo != nullptr && mobItr->Health > 0) {
+            mobItr++;
+            continue;
+        }
+
+        if (monsterInfo != nullptr)
+            DropLoot(monsterInfo->lootTable.c_str(), mobItr->Position);
+
+        RemoveSprite(mobItr->SpriteId);
+        if (monsterInfo != nullptr)
+            AddEffect(mobItr->Position, EffectType::RotateFade, monsterInfo->Sprite, 3.5f);
+
+        mobItr = Mobs.erase(mobItr);
+    }
+}
+
+void Game::UpdateMobSprites()
+{
+    for (auto &mob : Mobs) {
+        UpdateSprite(mob.SpriteId, mob.Position);
+    }
+}
+
 void Game::UpdateMobs()
 {
     Positions positions{Player1.Position, Player2.Position};
-    State.CullDeadMobs(positions);
+    CullDeadMobs();
 
     // check for mob actions
-    for (auto &mob : State.Mobs) {
+    for (auto &mob : Mobs) {
         auto *player = GetClosestPlayer(mob.Position);
         if (player->Waiting)
             continue;
@@ -271,8 +312,8 @@ void Game::UpdateMobs()
         if (mob.Triggered) {
             if (distance < monsterInfo->Attack.Range) {
                 // try to attack the player
-                if (State.GetGameTime() - mob.LastAttack >= monsterInfo->Attack.Cooldown) {
-                    mob.LastAttack = State.GetGameTime();
+                if (GetGameTime() - mob.LastAttack >= monsterInfo->Attack.Cooldown) {
+                    mob.LastAttack = GetGameTime();
                     int damage = ResolveAttack(monsterInfo->Attack, player->GetDefense());
 
                     if (monsterInfo->Attack.Melee)
@@ -311,7 +352,7 @@ void Game::UpdateSprites()
 {
     Player1.UpdateSprite();
     Player2.UpdateSprite();
-    State.UpdateMobSprites();
+    UpdateMobSprites();
 }
 
 void Game::UpdateGame()
@@ -334,41 +375,15 @@ void Game::UpdateGame()
     }
 
     // only update our game clock when we are unpaused
-    State.GameClock += GetFrameTime();
+    GameClock += GetFrameTime();
 
     GetPlayerInput();
 
-    auto destination1 = Player1.Move();
-    if (destination1.has_value()) {
-        if (Player1.Waiting && Player2.Waiting) {
-            if (destination1.value() == "endgame") {
-                EndGame(true, Player1.Gold + 100);
-            }
-            else {
-                std::string map = "maps/" + destination1.value();
-                LoadLevel(map.c_str());
-                StartLevel();
-            }
-        }
-    }
+    MovePlayer(Player1);
+    MovePlayer(Player2);
 
-    auto destination2 = Player2.Move();
-    if (destination2.has_value()) {
-        if (Player1.Waiting && Player2.Waiting) {
-            if (destination2.value() == "endgame") {
-                EndGame(true, Player1.Gold + 100);
-            }
-            else {
-                std::string map = "maps/" + destination2.value();
-                LoadLevel(map.c_str());
-                StartLevel();
-            }
-        }
-    }
-
-    Positions positions{Player1.Position, Player2.Position};
-    Player1.ApplyActions(positions);
-    Player2.ApplyActions(positions);
+    ApplyAction(Player1);
+    ApplyAction(Player2);
 
     UpdateMobs();
 
@@ -381,4 +396,302 @@ void Game::UpdateGame()
 
     SetVisiblePoint(Player1.Position);
     SetVisiblePoint(Player2.Position);
+}
+
+MobInstance *Game::GetNearestMobInSight(Vector2 &position)
+{
+    MobInstance *nearest = nullptr;
+    float nearestDistance = 9999999.9f;
+
+    for (auto &mob : Mobs) {
+        if (Ray2DHitsMap(mob.Position, position))
+            continue;
+
+        float dist = Vector2Distance(mob.Position, position);
+
+        if (dist < nearestDistance) {
+            nearest = &mob;
+            nearestDistance = dist;
+        }
+    }
+
+    return nearest;
+}
+
+void Game::UseConsumable(Player &player, Item *item)
+{
+    if (item == nullptr || !item->IsActivatable())
+        return;
+
+    float time = GetGameTime() - player.LastConsumeable;
+    if (time < 1)
+        return;
+
+    player.LastConsumeable = GetGameTime();
+
+    switch (item->Effect) {
+        case ActivatableEffects::Healing:player.Health += item->Value;
+            if (player.Health > MaxHealth)
+                player.Health = MaxHealth;
+
+            PlaySound(PlayerHealSoundId);
+            AddEffect(player.Position, EffectType::RiseFade, HealingSprite, 2);
+            break;
+
+        case ActivatableEffects::Defense:player.BuffDefense = item->Value;
+            player.BuffLifetimeLeft = item->Durration;
+            player.BuffItem = item->Sprite;
+            break;
+
+        case ActivatableEffects::Damage: {
+            MobInstance *mob = GetNearestMobInSight(player.Position);
+            if (mob != nullptr) {
+                mob->Health -= item->Value;
+                PlaySound(CreatureDamageSoundId);
+                AddEffect(player.Position, EffectType::ToTarget, item->Sprite, mob->Position, 1);
+                AddEffect(mob->Position, EffectType::RotateFade, item->Sprite, 1);
+            }
+            break;
+        }
+    }
+}
+
+void Game::PlaceItemDrop(TreasureInstance &item, Vector2 &dropPoint)
+{
+    Item *itemRecord = GetItem(item.ItemId);
+    if (!itemRecord)
+        return;
+
+    bool valid = false;
+    while (!valid) {
+        float angle = float(GetRandomValue(-180, 180));
+        Vector2 vec = {cosf(angle * DEG2RAD), sinf(angle * DEG2RAD)};
+        vec = Vector2Add(dropPoint, Vector2Scale(vec, 45));
+
+        if (PointInMap(vec) && Vector2Distance(vec, Player1.Position) > PickupDistance &&
+            Vector2Distance(vec, Player2.Position) > PickupDistance) {
+            item.Position = vec;
+            valid = true;
+        }
+    }
+
+    auto *sprite = AddSprite(itemRecord->Sprite, item.Position);
+    sprite->Shadow = true;
+    sprite->Bobble = true;
+    item.SpriteId = sprite->Id;
+
+    ItemDrops.push_back(item);
+}
+
+void Game::ActivateItem(Player &player, int slotIndex)
+{
+    if (slotIndex < 0 || slotIndex >= player.BackpackContents.size())
+        return;
+
+    InventoryContents &inventorySlot = player.BackpackContents[slotIndex];
+
+    Item *item = GetItem(inventorySlot.ItemId);
+    if (item == nullptr)
+        return;
+
+    TreasureInstance removedItem = player.RemoveInventoryItem(slotIndex, 1);
+
+    if (removedItem.Quantity == 0)
+        return;
+
+    switch (item->ItemType) {
+        case ItemTypes::Activatable:UseConsumable(player, item);
+            removedItem.ItemId = -1;
+            removedItem.Quantity = 0;
+            break;
+
+        case ItemTypes::Weapon: {
+            // save our current weapon
+            int weapon = player.EquipedWeapon;
+
+            // equip new weapon
+            player.EquipedWeapon = removedItem.ItemId;
+
+            // replace the removed item with the old weapon
+            removedItem.ItemId = weapon;
+            break;
+        }
+
+        case ItemTypes::Armor: {
+            // save our current armor
+            int armor = player.EquipedArmor;
+
+            // equip new weapon
+            player.EquipedArmor = removedItem.ItemId;
+
+            // replace the removed item with the old weapon
+            removedItem.ItemId = armor;
+            break;
+        }
+    }
+
+    // put whatever we have back, or drop it
+    if (removedItem.ItemId != -1) {
+        // stick it back in our bag
+        if (!player.PickupItem(removedItem)) {
+            // no room, drop it
+            PlaceItemDrop(removedItem, player.Position);
+        }
+    }
+}
+
+void Game::DropItem(Player &player, int item)
+{
+    TreasureInstance drop = player.RemoveInventoryItem(item, 999);
+    PlaceItemDrop(drop, player.Position);
+}
+
+void Game::MovePlayer(Player &player)
+{
+    // does the player want to move
+    if (player.TargetActive) {
+        Vector2 movement = Vector2Subtract(player.Target, player.Position);
+        float distance = Vector2Length(movement);
+
+        float frameSpeed = GetFrameTime() * player.Speed;
+
+        if (distance <= frameSpeed) {
+            player.Position = player.Target;
+            player.TargetActive = false;
+        }
+        else {
+            movement = Vector2Normalize(movement);
+            Vector2 newPos = Vector2Add(player.Position, Vector2Scale(movement, frameSpeed));
+
+            if (!PointInMap(newPos)) {
+                player.TargetActive = false;
+            }
+            else {
+                player.Position = newPos;
+            }
+        }
+    }
+
+    // see if the player entered an exit
+    for (auto exit : Exits) {
+        if (CheckCollisionPointRec(player.Position, exit.Bounds)) {
+            if (exit.Destination == "endgame") {
+                EndGame(true, player.Gold + 100);
+            }
+            else {
+                std::string map = "maps/" + exit.Destination;
+                LoadLevel(map.c_str());
+                StartLevel();
+            }
+            break;
+        }
+    }
+}
+
+void Game::DropLoot(const char *contents, Vector2 &dropPoint)
+{
+    std::vector<TreasureInstance> loot = GetLoot(contents);
+    for (TreasureInstance &item : loot) {
+        PlaceItemDrop(item, dropPoint);
+        AddEffect(item.Position, EffectType::ScaleFade, LootSprite, 1);
+    }
+}
+
+void Game::ApplyAction(Player &player)
+{
+
+    // see if we want to attack any mobs
+    if (player.TargetMob != nullptr) {
+        // see if we can even attack.
+        if (GetGameTime() - player.LastAttack >= player.GetAttack().Cooldown) {
+            float distance = Vector2Distance(player.TargetMob->Position, player.Position);
+            if (distance < player.GetAttack().Range + 40) {
+                MOB *monsterInfo = GetMob(player.TargetMob->MobId);
+                if (monsterInfo != nullptr) {
+                    AddEffect(player.TargetMob->Position, EffectType::ScaleFade, ClickTargetSprite);
+                    if (!player.GetAttack().Melee)
+                        AddEffect(player.Position,
+                                  EffectType::ToTarget,
+                                  ProjectileSprite,
+                                  player.TargetMob->Position,
+                                  0.25f);
+
+                    int damage = ResolveAttack(player.GetAttack(), monsterInfo->Defense.Defense);
+                    if (damage == 0) {
+                        PlaySound(MissSoundId);
+                    }
+                    else {
+                        PlaySound(HitSoundId);
+                        PlaySound(CreatureDamageSoundId);
+                        AddEffect(Vector2{player.TargetMob->Position.x, player.TargetMob->Position.y - 16},
+                                  EffectType::RiseFade,
+                                  DamageSprite);
+                        player.TargetMob->Health -= damage;
+
+                        // if you hit them, they wake up!
+                        player.TargetMob->Triggered = true;
+                    }
+                }
+            }
+
+            player.TargetMob = nullptr;
+        }
+    }
+
+    // see if the player is near the last clicked chest, if so open it
+    if (player.TargetChest != nullptr) {
+        Vector2 center = {player.TargetChest->Bounds.x + player.TargetChest->Bounds.width / 2,
+            player.TargetChest->Bounds.y + player.TargetChest->Bounds.height / 2};
+        float distance = Vector2Distance(center, player.Position);
+        if (distance <= 50) {
+            if (!player.TargetChest->Opened) {
+                PlaySound(ChestOpenSoundId);
+                player.TargetChest->Opened = true;
+
+                DropLoot(player.TargetChest->Contents.c_str(), center);
+            }
+            player.TargetChest = nullptr;
+        }
+    }
+
+
+    // see if we are under any items to pickup
+    for (auto item = ItemDrops.begin(); item != ItemDrops.end();) {
+        float distance = Vector2Distance(item->Position, player.Position);
+        if (distance <= PickupDistance) {
+            if (player.PickupItem(*item)) {
+                RemoveSprite(item->SpriteId);
+                item = ItemDrops.erase(item);
+                continue;
+            }
+        }
+
+        item++;
+    }
+
+    float time = GetGameTime();
+
+    float attackTime = time - player.LastAttack;
+    float itemTime = time - player.LastConsumeable;
+
+    if (attackTime >= player.GetAttack().Cooldown)
+        player.AttackCooldown = 0;
+    else
+        player.AttackCooldown = 1.0f - (attackTime / player.AttackCooldown);
+
+    float itemCooldown = 1;
+
+    if (itemTime >= itemCooldown)
+        player.ItemCooldown = 0;
+    else
+        player.ItemCooldown = 1.0f - (itemTime / itemCooldown);
+
+    if (player.BuffLifetimeLeft > 0) {
+        player.BuffLifetimeLeft -= GetFrameTime();
+        if (player.BuffLifetimeLeft <= 0) {
+            player.BuffDefense = 0;
+            player.BuffItem = -1;
+            player.BuffLifetimeLeft = 0;
+        }
+    }
 }

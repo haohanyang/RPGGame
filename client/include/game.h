@@ -23,22 +23,16 @@
  *
  **********************************************************************************************/
 
-#ifndef GAME_H
-#define GAME_H
-
+#pragma once
 
 #include "player.h"
 #include "game.h"
 #include "game_hud.h"
 
 
-class Game {
+class Game
+{
 public:
-    Player Player1;
-    Player Player2;
-    GameState State;
-    GameHudScreen GameHud;
-
     Game();
     void InitGame();
     void ActivateGame();
@@ -51,9 +45,32 @@ public:
     void GetPlayerInput();
 
     void UpdateMobs();
-    Player* GetClosestPlayer(const Vector2 &position);
+    void CullDeadMobs();
+    void UpdateMobSprites();
+    Player *GetClosestPlayer(const Vector2 &position);
 
     void UpdateSprites();
-};
+    void MovePlayer(Player &player);
+    void ApplyAction(Player &player);
+    void UseConsumable(Player &player, Item *item);
+    MobInstance *GetNearestMobInSight(Vector2 &position);
 
-#endif
+    void ActivateItem(Player &player, int slotIndex);
+    void DropItem(Player &player, int item);
+    void PlaceItemDrop(TreasureInstance &item, Vector2 &dropPoint);
+    void DropLoot(const char *contents, Vector2 &dropPoint);
+
+
+private:
+    Player Player1;
+    Player Player2;
+    GameHudScreen GameHud;
+
+    double GameClock = 0;
+    std::vector<Exit> Exits;
+    std::vector<Chest> Chests;
+    std::vector<TreasureInstance> ItemDrops;
+    std::vector<MobInstance> Mobs;
+
+    float GetGameTime();
+};
