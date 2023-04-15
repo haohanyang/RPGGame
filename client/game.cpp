@@ -24,11 +24,6 @@ Game::Game()
     { DropItem(Player2, item); };
 }
 
-float Game::GetGameTime()
-{
-    return (float) GameClock;
-}
-
 void Game::LoadLevel(const char *level)
 {
     LoadMap(level);
@@ -546,6 +541,13 @@ void Game::DropItem(Player &player, int item)
     PlaceItemDrop(drop, player.Position);
 }
 
+const Player &Game::GetPartner(Player &player)
+{
+    if (player.Id == 1)
+        return Player2;
+    return Player1;
+}
+
 void Game::MovePlayer(Player &player)
 {
     // does the player want to move
@@ -573,15 +575,21 @@ void Game::MovePlayer(Player &player)
     }
 
     // see if the player entered an exit
-    for (auto exit : Exits) {
+    for (auto &exit : Exits) {
         if (CheckCollisionPointRec(player.Position, exit.Bounds)) {
-            if (exit.Destination == "endgame") {
-                EndGame(true, player.Gold + 100);
-            }
-            else {
-                std::string map = "maps/" + exit.Destination;
-                LoadLevel(map.c_str());
-                StartLevel();
+            player.Waiting = true;
+            player.TargetChest = nullptr;
+            player.TargetChest = nullptr;
+
+            if (GetPartner(player).Waiting) {
+                if (exit.Destination == "endgame") {
+                    EndGame(true, player.Gold + 100);
+                }
+                else {
+                    std::string map = "maps/" + exit.Destination;
+                    LoadLevel(map.c_str());
+                    StartLevel();
+                }
             }
             break;
         }

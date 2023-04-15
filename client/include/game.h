@@ -49,6 +49,8 @@ public:
     void UpdateMobSprites();
     Player *GetClosestPlayer(const Vector2 &position);
 
+    const Player &GetPartner(Player &player);
+
     void UpdateSprites();
     void MovePlayer(Player &player);
     void ApplyAction(Player &player);
@@ -74,3 +76,8 @@ private:
 
     float GetGameTime();
 };
+
+inline float Game::GetGameTime()
+{
+    return (float) GameClock;
+}
