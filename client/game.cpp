@@ -507,10 +507,10 @@ void Game::ActivateItem(Player &player, int slotIndex)
 
         case ItemTypes::Weapon: {
             // save our current weapon
-            int weapon = player.EquipedWeapon;
+            int weapon = player.EquippedWeapon;
 
             // equip new weapon
-            player.EquipedWeapon = removedItem.ItemId;
+            player.EquippedWeapon = removedItem.ItemId;
 
             // replace the removed item with the old weapon
             removedItem.ItemId = weapon;
@@ -519,10 +519,10 @@ void Game::ActivateItem(Player &player, int slotIndex)
 
         case ItemTypes::Armor: {
             // save our current armor
-            int armor = player.EquipedArmor;
+            int armor = player.EquippedArmor;
 
             // equip new weapon
-            player.EquipedArmor = removedItem.ItemId;
+            player.EquippedArmor = removedItem.ItemId;
 
             // replace the removed item with the old weapon
             removedItem.ItemId = armor;

@@ -48,16 +48,17 @@ public:
     int BuffDefense = 0;
 
     // inventory
-    int EquipedWeapon = -1;
-    int EquipedArmor = -1;
+    int EquippedWeapon = -1;
+    int EquippedArmor = -1;
+
     std::vector<InventoryContents> BackpackContents;
     bool Waiting = false;
     Chest *TargetChest = nullptr;
     MobInstance *TargetMob = nullptr;
 
     Player(uint8_t id, std::string name);
-    const AttackInfo &GetAttack() const;
-    const int GetDefense() const;
+    [[nodiscard]] const AttackInfo &GetAttack() const;
+    [[nodiscard]] const int GetDefense() const;
     TreasureInstance RemoveInventoryItem(int slot, int quantity);
     bool PickupItem(TreasureInstance &drop);
     void UpdateSprite();
@@ -69,3 +70,19 @@ private:
     AttackInfo DefaultAttack = {"Slap", true, 1, 1, 1.0f, 10.0f};
     DefenseInfo DefaultDefense = {0};
 };
+
+inline const AttackInfo &Player::GetAttack() const
+{
+    if (EquippedWeapon == -1)
+        return DefaultAttack;
+
+    return GetItem(EquippedWeapon)->Attack;
+}
+
+inline const int Player::GetDefense() const
+{
+    if (EquippedArmor == -1)
+        return 0 + BuffDefense;
+
+    return GetItem(EquippedArmor)->Defense.Defense + BuffDefense;
+}

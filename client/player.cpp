@@ -17,22 +17,6 @@ Player::Player(uint8_t id, std::string name)
 
 }
 
-const AttackInfo &Player::GetAttack() const
-{
-    if (EquipedWeapon == -1)
-        return DefaultAttack;
-
-    return GetItem(EquipedWeapon)->Attack;
-}
-
-const int Player::GetDefense() const
-{
-    if (EquipedArmor == -1)
-        return 0 + BuffDefense;
-
-    return GetItem(EquipedArmor)->Defense.Defense + BuffDefense;
-}
-
 TreasureInstance Player::RemoveInventoryItem(int slot, int quantity)
 {
     TreasureInstance treasure = {-1, 0};
@@ -79,15 +63,15 @@ bool Player::PickupItem(TreasureInstance &drop)
         return true;
 
     // see if this is a weapon, and we are unarmed, if so, equip one
-    if (item->IsWeapon() && EquipedWeapon == -1) {
-        EquipedWeapon = item->Id;
+    if (item->IsWeapon() && EquippedWeapon == -1) {
+        EquippedWeapon = item->Id;
         drop.Quantity--;
         PlaySound(ItemPickupSoundId);
     }
 
     // see if this is armor, and we are naked, if so, equip one
-    if (item->IsArmor() && EquipedArmor == -1) {
-        EquipedArmor = item->Id;
+    if (item->IsArmor() && EquippedArmor == -1) {
+        EquippedArmor = item->Id;
         drop.Quantity--;
         PlaySound(ItemPickupSoundId);
     }
@@ -123,11 +107,11 @@ void Player::UpdateSprite()
     if (Sprite != nullptr)
         Sprite->Position = Position;
 
-    if (EquipedArmor == ChainArmorItem)
+    if (EquippedArmor == ChainArmorItem)
         Sprite->SpriteFrame = PlayerChainSprite;
-    else if (EquipedArmor == PlateArmorItem)
+    else if (EquippedArmor == PlateArmorItem)
         Sprite->SpriteFrame = PlayerPlateSprite;
-    else if (EquipedArmor == LeatherArmorItem)
+    else if (EquippedArmor == LeatherArmorItem)
         Sprite->SpriteFrame = PlayerLeatherSprite;
     else
         Sprite->SpriteFrame = PlayerSprite;

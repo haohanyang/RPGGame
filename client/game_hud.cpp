@@ -53,7 +53,7 @@ void GameHudScreen::DrawInventory(Player &player)
     FillRectWithSprite(InventoryBackgroundSprite, inventoryWindowRect);
 
     // equipment
-    Item *weaponItem = GetItem(player.EquipedWeapon);
+    Item *weaponItem = GetItem(player.EquippedWeapon);
     if (DrawButton(inventoryWindowRect.x + 20,
                    inventoryWindowRect.y + 20,
                    weaponItem != nullptr ? weaponItem->Sprite : -1,
@@ -74,7 +74,7 @@ void GameHudScreen::DrawInventory(Player &player)
              20,
              WHITE);
 
-    Item *armorItem = GetItem(player.EquipedArmor);
+    Item *armorItem = GetItem(player.EquippedArmor);
     if (DrawButton(inventoryWindowRect.x + inventoryWindowRect.width - (20 + ButtonSize),
                    inventoryWindowRect.y + 20,
                    armorItem != nullptr ? armorItem->Sprite : -1,
@@ -188,7 +188,7 @@ void GameHudScreen::Draw(Player &player, float barHeight)
     float buttonX = 20 + healthBarWidth + 10;
     float buttonY = barHeight + 4;
 
-    Item *weapon = GetItem(player.EquipedWeapon);
+    Item *weapon = GetItem(player.EquippedWeapon);
     // equipped weapon
     DrawButton(buttonX, buttonY, weapon != nullptr ? weapon->Sprite : -1, 0, DARKGRAY, GRAY);
 
