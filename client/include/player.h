@@ -51,6 +51,8 @@ public:
     int EquippedWeapon = -1;
     int EquippedArmor = -1;
 
+    bool InventoryOpen = false;
+
     std::vector<InventoryContents> BackpackContents;
     bool Waiting = false;
     Chest *TargetChest = nullptr;

@@ -24,9 +24,8 @@
 **********************************************************************************************/
 
 #pragma once
-
+#include "screens.h"
+void UpdateLoad(std::function<void()> onFinished, LoadingScreen *screen);
 void InitResources();
 void CleanupResources();
-
-void UpdateLoad();
 

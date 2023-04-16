@@ -48,8 +48,6 @@ add_executable(
         client/map.cpp
         client/main.cpp
         client/monsters.cpp
-        client/pause.cpp
-        client/pause.cpp
         client/screens.cpp
         client/sprites.cpp
         client/tile_map_drawing.cpp

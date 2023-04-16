@@ -2,6 +2,18 @@
 
 #include "raylib.h"
 #include <string>
+
+enum class ApplicationStates
+{
+    Startup,
+    Loading,
+    Menu,
+    Running,
+    Paused,
+    GameOver,
+    Quitting
+};
+
 struct Exit
 {
     Rectangle Bounds;

@@ -27,15 +27,13 @@
 
 #include "player.h"
 #include "game.h"
-#include "game_hud.h"
 
 
-class Game
+class GameState
 {
 public:
-    Game();
+    GameState();
     void InitGame();
-    void ActivateGame();
     void QuitGame();
     void UpdateGame();
 
@@ -62,11 +60,8 @@ public:
     void PlaceItemDrop(TreasureInstance &item, Vector2 &dropPoint);
     void DropLoot(const char *contents, Vector2 &dropPoint);
 
-
-private:
     Player Player1;
     Player Player2;
-    GameHudScreen GameHud;
 
     double GameClock = 0;
     std::vector<Exit> Exits;
@@ -74,10 +69,13 @@ private:
     std::vector<TreasureInstance> ItemDrops;
     std::vector<MobInstance> Mobs;
 
+    std::function<void()> PauseGame;
+    std::function<void(bool, int)> EndGame;
     float GetGameTime();
+
 };
 
-inline float Game::GetGameTime()
+inline float GameState::GetGameTime()
 {
     return (float) GameClock;
 }

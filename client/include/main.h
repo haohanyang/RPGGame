@@ -30,13 +30,15 @@ constexpr char VersionString[] = "v 0.5.28122021";
 
 constexpr char CopyrightString[] = "Copyright 2021-22 Jeffery Myers";
 
+// all the states the program can be in
+
 // functions to change the game states
 
-void LoadComplete();
-void GoToMainMenu();
-void StartGame();
-void PauseGame();
-void ResumeGame();
-void EndGame(bool win, int gold);
-void QuitApplication();
+//void LoadComplete();
+//void GoToMainMenu();
+//void StartGame();
+//void PauseGame();
+//void ResumeGame();
+//void EndGame(bool win, int gold);
+//void QuitApplication(ApplicationStates &state);
 

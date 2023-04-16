@@ -10,8 +10,8 @@
 #include "raymath.h"
 
 
-Game::Game()
-    : Player1(1, "Player1"), Player2(2, "Player2"), GameHud(Player1, Player2)
+GameState::GameState()
+    : Player1(1, "Player1"), Player2(2, "Player2")
 {
     Player1.ActivateItem = [this](int item)
     { ActivateItem(Player1, item); };
@@ -24,7 +24,7 @@ Game::Game()
     { DropItem(Player2, item); };
 }
 
-void Game::LoadLevel(const char *level)
+void GameState::LoadLevel(const char *level)
 {
     LoadMap(level);
     Player1.Sprite = AddSprite(PlayerSprite, Player1.Position);
@@ -36,7 +36,7 @@ void Game::LoadLevel(const char *level)
     Player2.Sprite->Shadow = true;
 }
 
-void Game::StartLevel()
+void GameState::StartLevel()
 {
     GameClock = 0;
 
@@ -103,26 +103,19 @@ void Game::StartLevel()
     }
 }
 
-void Game::InitGame()
+void GameState::InitGame()
 {
-    ActivateGame();
-
     // load start level
     LoadLevel("maps/level0.tmx");
     StartLevel();
 }
 
-void Game::QuitGame()
+void GameState::QuitGame()
 {
     ClearMap();
 }
 
-void Game::ActivateGame()
-{
-    SetActiveScreen(&GameHud);
-}
-
-void Game::GetPlayerInput()
+void GameState::GetPlayerInput()
 {
     float moveUnit = 2.0f;
 
@@ -229,7 +222,7 @@ void Game::GetPlayerInput()
     }
 }
 
-Player *Game::GetClosestPlayer(const Vector2 &position)
+Player *GameState::GetClosestPlayer(const Vector2 &position)
 {
     auto vecToPlayer1 = Vector2Subtract(Player1.Position, position);
     auto distance1 = Vector2Length(vecToPlayer1);
@@ -243,7 +236,7 @@ Player *Game::GetClosestPlayer(const Vector2 &position)
     return &Player2;
 }
 
-void Game::CullDeadMobs()
+void GameState::CullDeadMobs()
 {
     for (auto mobItr = Mobs.begin(); mobItr != Mobs.end();) {
         MOB *monsterInfo = GetMob(mobItr->MobId);
@@ -263,14 +256,14 @@ void Game::CullDeadMobs()
     }
 }
 
-void Game::UpdateMobSprites()
+void GameState::UpdateMobSprites()
 {
     for (auto &mob : Mobs) {
         UpdateSprite(mob.SpriteId, mob.Position);
     }
 }
 
-void Game::UpdateMobs()
+void GameState::UpdateMobs()
 {
     Positions positions{Player1.Position, Player2.Position};
     CullDeadMobs();
@@ -343,20 +336,20 @@ void Game::UpdateMobs()
     }
 }
 
-void Game::UpdateSprites()
+void GameState::UpdateSprites()
 {
     Player1.UpdateSprite();
     Player2.UpdateSprite();
     UpdateMobSprites();
 }
 
-void Game::UpdateGame()
+void GameState::UpdateGame()
 {
     if (IsKeyPressed(KEY_ESCAPE)) {
 
-        if (GameHud.Player1InventoryOpen || GameHud.Player2InventoryOpen) {
-            GameHud.Player1InventoryOpen = false;
-            GameHud.Player2InventoryOpen = false;
+        if (Player1.InventoryOpen || Player2.InventoryOpen) {
+            Player1.InventoryOpen = false;
+            Player2.InventoryOpen = false;
         }
         else {
             PauseGame();
@@ -393,7 +386,7 @@ void Game::UpdateGame()
     SetVisiblePoint(Player2.Position);
 }
 
-MobInstance *Game::GetNearestMobInSight(Vector2 &position)
+MobInstance *GameState::GetNearestMobInSight(Vector2 &position)
 {
     MobInstance *nearest = nullptr;
     float nearestDistance = 9999999.9f;
@@ -413,7 +406,7 @@ MobInstance *Game::GetNearestMobInSight(Vector2 &position)
     return nearest;
 }
 
-void Game::UseConsumable(Player &player, Item *item)
+void GameState::UseConsumable(Player &player, Item *item)
 {
     if (item == nullptr || !item->IsActivatable())
         return;
@@ -451,7 +444,7 @@ void Game::UseConsumable(Player &player, Item *item)
     }
 }
 
-void Game::PlaceItemDrop(TreasureInstance &item, Vector2 &dropPoint)
+void GameState::PlaceItemDrop(TreasureInstance &item, Vector2 &dropPoint)
 {
     Item *itemRecord = GetItem(item.ItemId);
     if (!itemRecord)
@@ -478,7 +471,7 @@ void Game::PlaceItemDrop(TreasureInstance &item, Vector2 &dropPoint)
     ItemDrops.push_back(item);
 }
 
-void Game::ActivateItem(Player &player, int slotIndex)
+void GameState::ActivateItem(Player &player, int slotIndex)
 {
     if (slotIndex < 0 || slotIndex >= player.BackpackContents.size())
         return;
@@ -535,20 +528,20 @@ void Game::ActivateItem(Player &player, int slotIndex)
     }
 }
 
-void Game::DropItem(Player &player, int item)
+void GameState::DropItem(Player &player, int item)
 {
     TreasureInstance drop = player.RemoveInventoryItem(item, 999);
     PlaceItemDrop(drop, player.Position);
 }
 
-const Player &Game::GetPartner(Player &player)
+const Player &GameState::GetPartner(Player &player)
 {
     if (player.Id == 1)
         return Player2;
     return Player1;
 }
 
-void Game::MovePlayer(Player &player)
+void GameState::MovePlayer(Player &player)
 {
     // does the player want to move
     if (player.TargetActive) {
@@ -596,7 +589,7 @@ void Game::MovePlayer(Player &player)
     }
 }
 
-void Game::DropLoot(const char *contents, Vector2 &dropPoint)
+void GameState::DropLoot(const char *contents, Vector2 &dropPoint)
 {
     std::vector<TreasureInstance> loot = GetLoot(contents);
     for (TreasureInstance &item : loot) {
@@ -605,7 +598,7 @@ void Game::DropLoot(const char *contents, Vector2 &dropPoint)
     }
 }
 
-void Game::ApplyAction(Player &player)
+void GameState::ApplyAction(Player &player)
 {
 
     // see if we want to attack any mobs

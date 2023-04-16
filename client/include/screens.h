@@ -26,28 +26,72 @@
 #pragma once
 
 #include "raylib.h"
+#include "game.h"
 
 class Screen
 {
 public:
-	virtual void Draw() = 0;
+    virtual void Draw() = 0;
 
 protected:
-	bool RectIsHovered(Rectangle& rect);
-	void DrawCenteredText(int y, const char* text, int fontSize, Color color);
-	bool CenteredButton(int y, const char* text);
+    bool RectIsHovered(Rectangle &rect);
+    void DrawCenteredText(int y, const char *text, int fontSize, Color color);
+    bool CenteredButton(int y, const char *text);
 
-	void DimSceen(float alpha = 0.75f);
+    void DimScreen(float alpha = 0.75f);
 
 protected:
-	Color ButtonColor = WHITE;
-	Color ButtonHighlight = SKYBLUE;
-	Color ButtonPressColor = DARKBLUE;
+    Color ButtonColor = WHITE;
+    Color ButtonHighlight = SKYBLUE;
+    Color ButtonPressColor = DARKBLUE;
 
-	int ButtonFontSize = 60;
-	int ButtonBorder = 10;
+    int ButtonFontSize = 60;
+    int ButtonBorder = 10;
 };
 
-void SetActiveScreen(Screen* screen);
+class GameOverScreen: public Screen
+{
+public:
+    GameOverScreen(bool isWin, bool gold);
+    GameOverScreen() = default;
+    void Draw() override;
+    std::function<void()> GoToMainMenu;
+    std::function<void()> QuitApplication;
+    bool IsWin = false;
+    int Gold = 0;
+};
 
-void DrawScreen();
+class MainMenuScreen: public Screen
+{
+public:
+    void Draw() override;
+    std::function<void()> StartGame;
+    std::function<void()> QuitApplication;
+};
+
+class PauseMenuScreen: public Screen
+{
+public:
+    void Draw() override;
+
+    std::function<void()> ResumeGame;
+    std::function<void()> GoToMainMenu;
+    std::function<void()> QuitApplication;
+};
+
+class LoadingScreen: public Screen
+{
+public:
+    std::string LoadingText = "Loading...";
+
+    LoadingScreen();
+    void Draw() override;
+
+    Vector2 Origin = {0, 0};
+
+    Rectangle LeftSpinner = {0, 0};
+    Rectangle RightSpinner = {0, 0};
+
+    // Load progress 0 = 0% 1 = 100%
+    float Progress = 0;
+};
