@@ -18,8 +18,8 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
         set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
         add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
         message(INFO ${raylib_BINARY_DIR})
-    endif()
-endif()
+    endif ()
+endif ()
 
 add_subdirectory(libs/pugixml)
 add_subdirectory(libs/enet)
@@ -48,13 +48,12 @@ add_executable(
         client/map.cpp
         client/main.cpp
         client/monsters.cpp
-        client/pause.cpp
-        client/pause.cpp
         client/screens.cpp
         client/sprites.cpp
         client/tile_map_drawing.cpp
         client/tile_map_io.cpp
         client/treasure.cpp
+        client/player.cpp
 )
 target_include_directories(rpg_game_client PUBLIC client/include libs/spdlog/include)
 target_link_libraries(rpg_game_client pugixml raylib net)
@@ -63,4 +62,4 @@ if (APPLE)
     target_link_libraries(rpg_game_client "-framework IOKit")
     target_link_libraries(rpg_game_client "-framework Cocoa")
     target_link_libraries(rpg_game_client "-framework OpenGL")
-endif()
+endif ()

@@ -25,84 +25,57 @@
 
 #pragma once
 
-#include "raylib.h"
-#include "sprites.h"
-#include "map.h"
-#include "combat.h"
-#include "treasure.h"
-#include "extra.h"
-#include <vector>
+#include "player.h"
+#include "game.h"
 
-void InitGame();
-void ActivateGame();
-void QuitGame();
-void UpdateGame();
 
-// game state data
-struct InventoryContents
-{
-	int ItemId;
-	int Quantity;
-};
-
-enum PLAYER_TYPE {
-    PLAYER1,
-    PLAYER2,
-    SINGLE_PLAYER
-};
-
-class PlayerData
+class GameState
 {
 public:
-    PlayerData(std::string name, PLAYER_TYPE type);
-	Vector2 Position = {0, 0};
-	SpriteInstance *Sprite = nullptr;
+    GameState();
+    void InitGame();
+    void QuitGame();
+    void UpdateGame();
 
-	bool TargetActive = false;
-	Vector2 Target = {0, 0};
+    void LoadLevel(const char *level);
+    void StartLevel();
 
-	float Speed = 100;
+    void GetPlayerInput();
 
-	// player stats
-	int Health = 100;
-	int MaxHealth = 100;
+    void UpdateMobs();
+    void CullDeadMobs();
+    void UpdateMobSprites();
+    Player *GetClosestPlayer(const Vector2 &position);
 
-	int Gold = 0;
+    const Player &GetPartner(Player &player);
 
-	const AttackInfo &GetAttack() const;
-	const int GetDefense() const;
-	TreasureInstance RemoveInventoryItem(int slot, int quantity);
-	bool PickupItem(TreasureInstance &drop);
-	void UseConsumable(Item *item);
-	void ActivateItem(int slotIndex);
-	void DropItem(int item);
-    void Move();
-    void ApplyActions();
-    void UpdateSprite();
+    void UpdateSprites();
+    void MovePlayer(Player &player);
+    void ApplyAction(Player &player);
+    void UseConsumable(Player &player, Item *item);
+    MobInstance *GetNearestMobInSight(Vector2 &position);
 
-    MobInstance* GetNearestMobInSight(std::vector<MobInstance> &mobs);
+    void ActivateItem(Player &player, int slotIndex);
+    void DropItem(Player &player, int item);
+    void PlaceItemDrop(TreasureInstance &item, Vector2 &dropPoint);
+    void DropLoot(const char *contents, Vector2 &dropPoint);
 
-	float LastAttack = 0;
-	float LastConsumeable = 0;
-	float AttackCooldown = 0;
-	float ItemCooldown = 0;
+    Player Player1;
+    Player Player2;
 
-	int BuffItem = -1;
-	float BuffLifetimeLeft = 0;
+    double GameClock = 0;
+    std::vector<Exit> Exits;
+    std::vector<Chest> Chests;
+    std::vector<TreasureInstance> ItemDrops;
+    std::vector<MobInstance> Mobs;
 
-	int BuffDefense = 0;
+    std::function<void()> PauseGame;
+    std::function<void(bool, int)> EndGame;
+    float GetGameTime();
 
-	// inventory
-	int EquipedWeapon = -1;
-	int EquipedArmor = -1;
-	std::vector<InventoryContents> BackpackContents;
-
-	float PickupDistance = 20;
-
-    std::string Name;
-    PLAYER_TYPE Type;
-
-private:
-	AttackInfo DefaultAttack = {"Slap", true, 1, 1, 1.0f, 10.0f};
-	DefenseInfo DefaultDefense = {0};
 };
+
+inline float GameState::GetGameTime()
+{
+    return (float) GameClock;
+}

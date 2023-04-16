@@ -352,3 +352,7 @@ raylib-master
 Catalog
 
 build/
+.vscode
+
+# Flatbuffers binary
+flatc

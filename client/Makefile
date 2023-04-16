@@ -209,7 +209,7 @@ $(OBJDIR)/map.o: map.cpp
 $(OBJDIR)/monsters.o: monsters.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/pause.o: pause.cpp
+$(OBJDIR)/pause.o: pause_screen.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/pugixml.o: PUGIXML/pugixml.cpp

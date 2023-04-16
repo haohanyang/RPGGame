@@ -1,15 +1,33 @@
-//
-// Created by Haohan Yang on 2023-04-05.
-//
+#pragma once
 
-#ifndef EXTRA_H
-#define EXTRA_H
 #include "raylib.h"
 #include <string>
+
+constexpr char VersionString[] = "v 0.5.28122021";
+
+constexpr char CopyrightString[] = "Copyright 2021-22 Jeffery Myers";
+
+enum class ApplicationStates
+{
+    Startup,
+    Loading,
+    Menu,
+    Running,
+    Paused,
+    GameOver,
+    Quitting
+};
+
 struct Exit
 {
     Rectangle Bounds;
     std::string Destination;
+};
+
+struct Positions
+{
+    Vector2 Player1Position;
+    Vector2 Player2Position;
 };
 
 struct Chest
@@ -29,5 +47,3 @@ struct MobInstance
     bool Triggered = false;
     float LastAttack = -100;
 };
-
-#endif //EXTRA_H
