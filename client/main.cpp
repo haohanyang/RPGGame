@@ -62,7 +62,7 @@ void SetupWindow()
     UnloadImage(icon);
 }
 
-void DrawScreen(Screen *screen)
+void DrawScreen(std::shared_ptr<Screen> screen)
 {
     if (screen != nullptr) {
         screen->Draw();
@@ -113,16 +113,17 @@ bool SearchAndSetResourceDir(const char *folderName)
 // the main application loop
 int main()
 {
-    Screen *activeScreen = nullptr;
-    auto mainMenuScreen = new MainMenuScreen();
-    auto pauseMenuScreen = new PauseMenuScreen();
-    auto gameOverScreen = new GameOverScreen();
-    auto loadingScreen = new LoadingScreen();
+    std::shared_ptr<Screen> activeScreen;
+    auto mainMenuScreen = std::make_shared<MainMenuScreen>();
+    auto pauseMenuScreen = std::make_shared<PauseMenuScreen>();
+    auto gameOverScreen = std::make_shared<GameOverScreen>();
+    auto loadingScreen = std::make_shared<LoadingScreen>();
 
     ApplicationStates applicationStates = ApplicationStates::Startup;
+
     GameState gameState;
 
-    auto gameHud = new GameHudScreen(gameState.Player1, gameState.Player2);
+    auto gameHud = std::make_shared<GameHudScreen>(gameState.Player1, gameState.Player2);
 
     // Define functions
     std::function<void()> LoadComplete = [&]() mutable
@@ -182,8 +183,8 @@ int main()
     std::function<void()> StartGame = [&]() mutable
     {
         applicationStates = ApplicationStates::Running;
-        activeScreen = nullptr;
         StopBGM();
+        activeScreen = gameHud;
         gameState.InitGame();
     };
 
@@ -230,9 +231,7 @@ int main()
     activeScreen = loadingScreen;
     InitResources();
 
-
     applicationStates = ApplicationStates::Loading;
-
 
     // game loop
     while (!WindowShouldClose() && applicationStates != ApplicationStates::Quitting) {

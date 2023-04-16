@@ -1,5 +1,4 @@
 #include "game.h"
-#include "main.h"
 #include "map.h"
 #include "items.h"
 #include "monsters.h"

@@ -24,7 +24,6 @@
 **********************************************************************************************/
 
 #include "loading.h"
-#include "main.h"
 #include "resource_ids.h"
 #include "screens.h"
 #include "sprites.h"
@@ -36,7 +35,6 @@
 #include "raymath.h"
 
 #include <vector>
-#include <string>
 #include <deque>
 
 std::deque<std::string> TexturesToLoad;
@@ -116,7 +114,7 @@ void FinalizeLoad()
     SetupDefaultMobs();
 }
 
-void UpdateLoad(std::function<void()> onFinished, LoadingScreen *screen)
+void UpdateLoad(std::function<void()> onFinished, std::shared_ptr<LoadingScreen> screen)
 {
     if (TexturesToLoad.empty() && SoundsToLoad.empty()) {
         FinalizeLoad();

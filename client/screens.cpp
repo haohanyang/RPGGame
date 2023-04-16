@@ -83,8 +83,8 @@ void MainMenuScreen::Draw()
     DrawCenteredText(40, "Raylib RPG Example", 40, BLUE);
 
     // version and copyright
-    DrawText("VersionString", 2, GetScreenHeight() - 10, 10, GRAY);
-    DrawText("CopyrightString",
+    DrawText(VersionString, 2, GetScreenHeight() - 10, 10, GRAY);
+    DrawText(CopyrightString,
              GetScreenWidth() - 2 - MeasureText("CopyrightString", 10),
              GetScreenHeight() - 10,
              10,
@@ -111,8 +111,8 @@ void PauseMenuScreen::Draw()
     DrawCenteredText(40, "Raylib RPG Example", 40, BLUE);
     DrawCenteredText(105, "Paused", 60, RED);
 
-    DrawText("VersionString", 2, GetScreenHeight() - 10, 10, GRAY);
-    DrawText("CopyrightString",
+    DrawText(VersionString, 2, GetScreenHeight() - 10, 10, GRAY);
+    DrawText(CopyrightString,
              GetScreenWidth() - 2 - MeasureText("CopyrightString", 10),
              GetScreenHeight() - 10,
              10,
@@ -153,8 +153,8 @@ void GameOverScreen::Draw()
     DrawCenteredText(200, TextFormat("Score = %d", Gold), 60, YELLOW);
 
     // version and copyright
-    DrawText("VersionString", 2, GetScreenHeight() - 10, 10, GRAY);
-    DrawText("CopyrightString",
+    DrawText(VersionString, 2, GetScreenHeight() - 10, 10, GRAY);
+    DrawText(CopyrightString,
              GetScreenWidth() - 2 - MeasureText("CopyrightString", 10),
              GetScreenHeight() - 10,
              10,

@@ -1,14 +1,10 @@
 #include "player.h"
 
-#include "main.h"
-#include "map.h"
 #include "items.h"
 #include "treasure.h"
-#include "monsters.h"
 #include "audio.h"
 #include "resource_ids.h"
 
-#include "raylib.h"
 #include "raymath.h"
 
 Player::Player(uint8_t id, std::string name)

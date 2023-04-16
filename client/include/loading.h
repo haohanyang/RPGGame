@@ -25,7 +25,7 @@
 
 #pragma once
 #include "screens.h"
-void UpdateLoad(std::function<void()> onFinished, LoadingScreen *screen);
+void UpdateLoad(std::function<void()> onFinished, std::shared_ptr<LoadingScreen> screen);
 void InitResources();
 void CleanupResources();
 
