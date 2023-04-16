@@ -1,43 +1,53 @@
-#ifndef NET_H
-#define NET_H
+#pragma once
 
 #include "enet/enet.h"
 #include "spdlog/spdlog.h"
 #include "serialize_generated.h"
-#include <unordered_map>
 
-namespace net {
+#include <array>
 
-constexpr uint32_t SERVER_MAX_CONNECTIONS = 5;
+using namespace Serialize;
+
+namespace net
+{
+
+constexpr uint32_t SERVER_MAX_CONNECTIONS = 2;
+
 constexpr time_t SERVER_TIMEOUT = 50000;
 
-constexpr uint32_t CLIENT_MAX_CONNECTIONS = 5;
-constexpr time_t CLIENT_TIMEOUT = 50000;
+constexpr uint32_t CLIENT_MAX_CONNECTIONS = 1;
+
+constexpr time_t CLIENT_TIMEOUT = 1000;
 
 constexpr uint8_t RELIABLE_CHANNEL = 0;
+
 constexpr uint8_t UNRELIABLE_CHANNEL = 1;
+
 constexpr uint8_t NUM_CHANNELS = 2;
 
-ENetPacket* Serialize(std::string message, float x, float y);
-const Pos* DeSerialize(void *data);
+ENetPacket *SerializePosition(uint8_t user, float x, float y);
 
-class ENetClient {
+class ENetClient
+{
 public:
-    static std::shared_ptr<ENetClient> Create();
-    ENetClient();
+    static std::shared_ptr<ENetClient> Create(uint8_t id);
+    ENetClient(uint8_t id);
     ~ENetClient();
     bool IsConnected();
     int Connect(const std::string &host, uint32_t port);
-    void Poll();
-    void SendPos(const std::string &message, float x, float y);
+    const Position *GetPosition(uint8_t playerId);
+    void SendPosition(float x, float y);
+    // int logType, const char *text, ..
+    void (*TraceLog)(int, const char *...);
 private:
+    uint8_t Id;
     ENetHost *Client;
     ENetPeer *Server;
     void Disconnect();
 };
 
-
-class ENetServer {
+class ENetServer
+{
 public:
     static std::shared_ptr<ENetServer> Create();
     ENetServer();
@@ -46,11 +56,9 @@ public:
     void Poll();
 private:
     ENetHost *Server;
-    std::unordered_map<uint32_t, ENetPeer*> Clients;
+    std::array<ENetPeer *, 2> Clients;
     void Shutdown();
     bool IsServing();
 };
 
 }
-
-#endif //NET_H
