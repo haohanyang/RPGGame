@@ -30,14 +30,10 @@ add_subdirectory(libs/flatbuffers)
 add_library(net libs/net/enet_client.cpp libs/net/enet_server.cpp libs/net/serialize.cpp)
 target_include_directories(net PUBLIC libs/net/include libs/enet/include libs/spdlog/include libs/flatbuffers/include)
 if (WIN32)
-    target_link_libraries(net enet spdlog flatbuffers)
-else()
     target_link_libraries(net enet spdlog flatbuffers ws2_32 winmm)
-endif()
-
-add_executable(net_test libs/net/test/main.cpp)
-target_include_directories(net_test PUBLIC libs/net/include)
-target_link_libraries(net_test net)
+else ()
+    target_link_libraries(net enet spdlog flatbuffers)
+endif ()
 
 # game client
 add_executable(
