@@ -28,12 +28,13 @@
 #include "player.h"
 #include "game.h"
 
+#include "net.h"
 
 class GameState
 {
 public:
     GameState();
-    void InitGame();
+    void InitGame(GameMode mode, uint8_t playerId);
     void QuitGame();
     void UpdateGame();
 
@@ -71,8 +72,11 @@ public:
 
     std::function<void()> PauseGame;
     std::function<void(bool, int)> EndGame;
+
     float GetGameTime();
 
+    std::shared_ptr<net::ENetClient> ENetClient;
+    GameMode Mode;
 };
 
 inline float GameState::GetGameTime()

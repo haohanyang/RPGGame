@@ -28,6 +28,8 @@
 #include "raylib.h"
 #include "game.h"
 
+#include <functional>
+
 class Screen
 {
 public:
@@ -65,7 +67,7 @@ class MainMenuScreen: public Screen
 {
 public:
     void Draw() override;
-    std::function<void()> StartGame;
+    std::function<void(GameMode mode)> StartGame;
     std::function<void()> QuitApplication;
 };
 

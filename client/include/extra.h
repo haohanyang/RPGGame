@@ -7,6 +7,12 @@ constexpr char VersionString[] = "v 0.5.28122021";
 
 constexpr char CopyrightString[] = "Copyright 2021-22 Jeffery Myers";
 
+enum class GameMode
+{
+    LOCAL,
+    ONLINE
+};
+
 enum class ApplicationStates
 {
     Startup,

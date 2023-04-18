@@ -111,8 +111,14 @@ bool SearchAndSetResourceDir(const char *folderName)
 }
 
 // the main application loop
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc != 2) {
+        TraceLog(LOG_FATAL, "Invalid arg");
+    }
+
+    int id = std::stoi(std::string(argv[1]));
+
     std::shared_ptr<Screen> activeScreen;
     auto mainMenuScreen = std::make_shared<MainMenuScreen>();
     auto pauseMenuScreen = std::make_shared<PauseMenuScreen>();
@@ -180,12 +186,12 @@ int main()
     };
 
     // starts a new game
-    std::function<void()> StartGame = [&]() mutable
+    std::function<void(GameMode)> StartGame = [&](GameMode mode) mutable
     {
         applicationStates = ApplicationStates::Running;
         StopBGM();
         activeScreen = gameHud;
-        gameState.InitGame();
+        gameState.InitGame(mode, id);
     };
 
     std::function<void()> PauseGame = [&]()

@@ -8,6 +8,7 @@
 #include "raylib.h"
 #include "raymath.h"
 
+constexpr bool disableLostFocusPause = true;
 
 GameState::GameState()
     : Player1(1, "Player1"), Player2(2, "Player2")
@@ -102,8 +103,20 @@ void GameState::StartLevel()
     }
 }
 
-void GameState::InitGame()
+void GameState::InitGame(GameMode mode, uint8_t id)
 {
+    Mode = mode;
+    if (mode == GameMode::ONLINE) {
+        ENetClient = net::ENetClient::Create(id);
+        ENetClient->TraceLog = TraceLog;
+        if (ENetClient->Connect("localhost", 8000) != 0) {
+            TraceLog(LOG_ERROR, "Error connect");
+            Mode = GameMode::LOCAL;
+        }
+
+        Player1.Id = id;
+        Player2.Id = 3 - id;
+    }
     // load start level
     LoadLevel("maps/level0.tmx");
     StartLevel();
@@ -142,35 +155,13 @@ void GameState::GetPlayerInput()
         player1KeyPressed = true;
     }
 
-    // User2 input
-    bool player2KeyPressed = false;
-    Vector2 player2TargetPosition = Player2.Position;
-
-    if (IsKeyDown(KEY_A)) {
-        player2TargetPosition.x -= moveUnit;
-        player2KeyPressed = true;
-    }
-
-    if (IsKeyDown(KEY_D)) {
-        player2TargetPosition.x += moveUnit;
-        player2KeyPressed = true;
-    }
-
-    if (IsKeyDown(KEY_W)) {
-        player2TargetPosition.y -= moveUnit;
-        player2KeyPressed = true;
-    }
-
-    if (IsKeyDown(KEY_S)) {
-        player2TargetPosition.y += moveUnit;
-        player2KeyPressed = true;
-    }
-
     // check for key inputs
     if (!Player1.Waiting && player1KeyPressed) {
         if (PointInMap(player1TargetPosition)) {
             Player1.TargetActive = true;
             Player1.Target = player1TargetPosition;
+            if (Mode == GameMode::ONLINE)
+                ENetClient->SendPosition(player1TargetPosition.x, player1TargetPosition.y);
         }
 
         Player1.TargetChest = nullptr;
@@ -191,6 +182,41 @@ void GameState::GetPlayerInput()
                     break;
                 }
             }
+        }
+    }
+
+    // User2 input
+    bool player2KeyPressed = false;
+    Vector2 player2TargetPosition;
+
+    if (Mode != GameMode::ONLINE) {
+        player2TargetPosition = Player2.Position;
+        if (IsKeyDown(KEY_A)) {
+            player2TargetPosition.x -= moveUnit;
+            player2KeyPressed = true;
+        }
+
+        if (IsKeyDown(KEY_D)) {
+            player2TargetPosition.x += moveUnit;
+            player2KeyPressed = true;
+        }
+
+        if (IsKeyDown(KEY_W)) {
+            player2TargetPosition.y -= moveUnit;
+            player2KeyPressed = true;
+        }
+
+        if (IsKeyDown(KEY_S)) {
+            player2TargetPosition.y += moveUnit;
+            player2KeyPressed = true;
+        }
+    }
+    else {
+        auto pos = ENetClient->GetPosition(Player2.Id);
+        if (pos != nullptr) {
+            player2KeyPressed = true;
+            player2TargetPosition.x = pos->x();
+            player2TargetPosition.y = pos->y();
         }
     }
 
@@ -356,7 +382,7 @@ void GameState::UpdateGame()
         }
     }
 
-    if (!IsWindowFocused()) {
+    if (!disableLostFocusPause && !IsWindowFocused()) {
         PauseGame();
         return;
     }

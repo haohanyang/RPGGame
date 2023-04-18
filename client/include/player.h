@@ -8,6 +8,7 @@
 #include "treasure.h"
 
 #include <string>
+#include <functional>
 
 struct InventoryContents
 {

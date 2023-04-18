@@ -91,11 +91,12 @@ void MainMenuScreen::Draw()
              GRAY);
 
     // play button
-    if (CenteredButton(GetScreenHeight() / 4, "Play"))
-        StartGame();
+    if (CenteredButton(GetScreenHeight() / 4, "Local Play"))
+        StartGame(GameMode::LOCAL);
 
-    // options button
-    CenteredButton(GetScreenHeight() / 2, "Options");
+    // online game button
+    if (CenteredButton(GetScreenHeight() / 2, "Online Play"))
+        StartGame(GameMode::ONLINE);
 
     // quit button
     if (CenteredButton(GetScreenHeight() - (GetScreenHeight() / 4), "Quit"))
