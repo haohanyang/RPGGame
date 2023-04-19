@@ -53,6 +53,7 @@ public:
     void StartLevel();
 
     void GetPlayerInput();
+    void GetPlayerInput(Player &player);
 
     void UpdateMobs();
     void CullDeadMobs();
@@ -85,7 +86,7 @@ public:
     std::function<void(bool, int)> EndGame;
 
     float GetGameTime();
-
+    const float MoveUnit = 2.0f;
     std::shared_ptr<net::ENetClient> ENetClient;
     GameMode Mode;
 };

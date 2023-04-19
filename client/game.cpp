@@ -117,6 +117,10 @@ void GameState::InitGame(GameMode mode, uint8_t id)
         Player1.Id = id;
         Player2.Id = 3 - id;
     }
+    else {
+        Player1.Id = 1;
+        Player2.Id = 2;
+    }
     // load start level
     LoadLevel("maps/level0.tmx");
     StartLevel();
@@ -241,6 +245,137 @@ void GameState::GetPlayerInput()
                     if (Vector2Distance(Player2.Position, mob.Position) <= Player2.GetAttack().Range + 40)
                         Player2.TargetActive = false;
                     break;
+                }
+            }
+        }
+    }
+}
+
+/// <summary>
+/// Get user's target position. Set set TargetChest and TargetMob if players is close to it.
+/// </summary>
+/// <param name="player"></param>
+void GameState::GetPlayerInput(Player& player)
+{
+
+    if (player.Id == Player1.Id) {
+        // Player1
+        bool keyPressed = false;
+        Vector2 targetPosition = player.Position;
+
+        if (IsKeyDown(KEY_LEFT)) {
+            targetPosition.x -= MoveUnit;
+            keyPressed = true;
+        }
+
+        if (IsKeyDown(KEY_RIGHT)) {
+            targetPosition.x += MoveUnit;
+            keyPressed = true;
+        }
+
+        if (IsKeyDown(KEY_UP)) {
+            targetPosition.y -= MoveUnit;
+            keyPressed = true;
+        }
+
+        if (IsKeyDown(KEY_DOWN)) {
+            targetPosition.y += MoveUnit;
+            keyPressed = true;
+        }
+
+        // check for key inputs
+        if (!player.Waiting && keyPressed) {
+            if (PointInMap(targetPosition)) {
+                player.TargetActive = true;
+                player.Target = targetPosition;
+                if (Mode == GameMode::ONLINE)
+                    ENetClient->SendPosition(targetPosition.x, targetPosition.y);
+            }
+
+            // if player is close to any chest
+            player.TargetChest = nullptr;
+            for (auto& chest : Chests) {
+                if (CheckCollisionPointRec(targetPosition, chest.Bounds)) {
+                    player.TargetChest = &chest;
+                }
+            }
+
+            // if player is close to any mob
+            if (!player.Waiting) {
+                for (auto& mob : Mobs) {
+                    if (CheckCollisionPointCircle(targetPosition, mob.Position, 20)) {
+                        player.TargetMob = &mob;
+
+                        if (Vector2Distance(player.Position, mob.Position) <= player.GetAttack().Range + 40)
+                            player.TargetActive = false;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        // Player2
+        bool keyPressed = false;
+        Vector2 targetPosition = player.Position;
+
+        if (Mode == GameMode::LOCAL) {
+            if (IsKeyDown(KEY_A)) {
+                targetPosition.x -= MoveUnit;
+                keyPressed = true;
+            }
+
+            if (IsKeyDown(KEY_D)) {
+                targetPosition.x += MoveUnit;
+                keyPressed = true;
+            }
+
+            if (IsKeyDown(KEY_W)) {
+                targetPosition.y -= MoveUnit;
+                keyPressed = true;
+            }
+
+            if (IsKeyDown(KEY_S)) {
+                targetPosition.y += MoveUnit;
+                keyPressed = true;
+            }
+        }
+        else {
+            auto pos = ENetClient->GetPosition(player.Id);
+            if (pos != nullptr) {
+                keyPressed = true;
+                targetPosition.x = pos->x();
+                targetPosition.y = pos->y();
+            }
+        }
+           
+        if (!player.Waiting && keyPressed) {
+            // Try to get the position from network
+            auto pos = ENetClient->GetPosition(player.Id);
+            if (pos != nullptr) {
+                Vector2 targetPosition = { pos->x(), pos->y() };
+                player.TargetActive = true;
+                player.Target = targetPosition;
+
+                // if player is close to any chest
+                player.TargetChest = nullptr;
+                for (auto& chest : Chests) {
+                    if (CheckCollisionPointRec(targetPosition, chest.Bounds)) {
+                        player.TargetChest = &chest;
+                    }
+                }
+
+                // if player is close to any mob
+                if (!player.Waiting) {
+                    for (auto& mob : Mobs) {
+                        if (CheckCollisionPointCircle(targetPosition, mob.Position, 20)) {
+                            player.TargetMob = &mob;
+
+                            if (Vector2Distance(player.Position, mob.Position) <= player.GetAttack().Range + 40)
+                                player.TargetActive = false;
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -389,8 +524,9 @@ void GameState::UpdateGame()
 
     // only update our game clock when we are unpaused
     GameClock += GetFrameTime();
-
     GetPlayerInput();
+    //GetPlayerInput(Player1);
+    //GetPlayerInput(Player2);
 
     MovePlayer(Player1);
     MovePlayer(Player2);
