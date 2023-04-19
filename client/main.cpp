@@ -30,7 +30,6 @@
 #include "game_hud.h"
 #include "audio.h"
 
-#include "raylib.h"
 
 // setup the window and icon
 void SetupWindow()

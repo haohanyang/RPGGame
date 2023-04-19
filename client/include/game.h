@@ -25,10 +25,21 @@
 
 #pragma once
 
-#include "player.h"
-#include "game.h"
 
-#include "net.h"
+#include "player.h"
+
+// Prevent Raylib.h's collision with windows.h https://github.com/raysan5/raylib/issues/1217
+#if defined(_WIN32)           
+#define NOGDI             // All GDI defines and routines
+#define NOUSER            // All USER defines and routines
+#endif
+
+#include "net.h"    
+
+#if defined(_WIN32)       // raylib uses these names as function parameters
+#undef near
+#undef far
+#endif
 
 class GameState
 {

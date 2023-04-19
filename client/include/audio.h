@@ -25,6 +25,10 @@
 
 #pragma once
 
+#ifdef _WIN32
+#undef PlaySound
+#endif 
+
 void InitAudio();
 void ShutdownAudio();
 void UpdateAudio();
